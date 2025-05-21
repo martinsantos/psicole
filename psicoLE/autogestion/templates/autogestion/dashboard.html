@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - Autogestión - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([{'text': 'My Dashboard'}]) }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3"><i class="fas fa-user-cog me-2"></i>{{ title }}</h2>
+    </div>
+
+    <div class="alert alert-primary shadow-sm" role="alert">
+        <h4 class="alert-heading">Welcome, {{ professional.first_name }} {{ professional.last_name }}!</h4>
+        <p>This is your self-service dashboard. From here you can manage your profile, documents, and financial information with the Colegio.</p>
+    </div>
+
+    <!-- Key Information/Summary -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="display-4 text-primary"><i class="fas fa-id-badge"></i></div>
+                    <h5 class="card-title mt-3">License Status</h5>
+                    <p class="card-text fs-4"><span class="badge bg-{{ 'success' if summary_info.status_matricula == 'active' else 'warning' if summary_info.status_matricula == 'pending' else 'danger' }} rounded-pill">{{ summary_info.status_matricula|title }}</span></p>
+                    <small class="text-muted">Expires: {{ summary_info.vigencia_matricula }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="display-4 text-warning"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <h5 class="card-title mt-3">{{ summary_info.outstanding_fees_count }} Outstanding Fee(s)</h5>
+                    <p class="card-text fs-4 text-danger">${{ "%.2f"|format(summary_info.total_outstanding_amount) }}</p>
+                    {% if summary_info.outstanding_fees_count > 0 %}
+                    <a href="{{ url_for('autogestion.financial_dashboard') }}#my-fees" class="btn btn-sm btn-outline-warning mt-1">View & Pay Fees</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="display-4 text-info"><i class="fas fa-user-edit"></i></div>
+                    <h5 class="card-title mt-3">{{ summary_info.pending_profile_changes_count }} Profile Change Request(s)</h5>
+                    <p class="card-text">Pending Review</p>
+                    {% if summary_info.pending_profile_changes_count > 0 %}
+                    <a href="{{ url_for('autogestion.view_my_profile') }}#my-change-requests" class="btn btn-sm btn-outline-info mt-1">View Requests</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Quick Links -->
+    <h3 class="mb-3"><i class="fas fa-link me-2"></i>Quick Actions</h3>
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-grid">
+                    <a href="{{ url_for('autogestion.financial_dashboard') }}#my-fees" class="btn btn-outline-primary btn-lg"><i class="fas fa-file-invoice-dollar me-2"></i>View/Pay My Fees</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-grid">
+                    <a href="{{ url_for('autogestion.financial_dashboard') }}#my-payments" class="btn btn-outline-success btn-lg"><i class="fas fa-history me-2"></i>My Payment History</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-grid">
+                    <a href="{{ url_for('autogestion.financial_dashboard') }}#my-invoices" class="btn btn-outline-info btn-lg"><i class="fas fa-receipt me-2"></i>My Invoices</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-grid">
+                    <a href="{{ url_for('autogestion.view_my_profile') }}" class="btn btn-outline-warning btn-lg"><i class="fas fa-id-card me-2"></i>Manage My Profile Data</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-grid">
+                    <a href="{{ url_for('autogestion.manage_my_documents') }}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-folder-open me-2"></i>Manage My Documents</a>
+                </div>
+            </div>
+        </div>
+        {# Future Placeholders #}
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-grid">
+                     <a href="#" class="btn btn-outline-dark btn-lg disabled"><i class="fas fa-chalkboard-teacher me-2"></i>Upcoming Courses (Future)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

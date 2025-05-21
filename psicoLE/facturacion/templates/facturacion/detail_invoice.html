@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - Factura {{ factura.numero_factura }} - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('facturacion.list_invoices'), 'text': 'Invoices'},
+    {'text': 'Invoice ' + factura.numero_factura}
+]) }}
+
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h2 class="h4 mb-0"><i class="fas fa-receipt me-2"></i>Invoice: {{ factura.numero_factura }}</h2>
+            <span class="badge bg-{{ 'success' if factura.estado == 'emitida' else 'danger' if factura.estado == 'anulada' else 'secondary' }} fs-6 rounded-pill">{{ factura.estado|title }}</span>
+        </div>
+        <div class="card-body p-4">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-user-tag me-1"></i> Client Information</h5>
+                    <p><strong>Client Name:</strong> {{ factura.cliente_nombre }}</p>
+                    <p><strong>Client Tax ID / DNI:</strong> {{ factura.cliente_identificacion or 'N/A' }}</p>
+                </div>
+                {% if factura.professional %}
+                <div class="col-md-6">
+                    <h5><i class="fas fa-user-tie me-1"></i> Associated Professional</h5>
+                    <p><strong>Name:</strong> 
+                        <a href="{{ url_for('profesionales.detail_professional', professional_id=factura.professional.id) }}">
+                            {{ factura.professional.first_name }} {{ factura.professional.last_name }}
+                        </a>
+                    </p>
+                    <p><strong>Matrícula:</strong> {{ factura.professional.matricula }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <hr>
+
+            <div class="row my-4">
+                 <div class="col-md-6">
+                    <h5><i class="fas fa-info-circle me-1"></i> Invoice Details</h5>
+                    <p><strong>Invoice Number:</strong> {{ factura.numero_factura }}</p>
+                    <p><strong>Emission Date:</strong> {{ factura.fecha_emision.strftime('%d/%m/%Y') if factura.fecha_emision else 'N/A' }}</p>
+                    <p><strong>Total Amount:</strong> <strong class="fs-5">${{ "%.2f"|format(factura.monto_total) }}</strong></p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-link me-1"></i> Status & Links</h5>
+                    <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if factura.estado == 'emitida' else 'danger' if factura.estado == 'anulada' else 'secondary' }} rounded-pill">{{ factura.estado|title }}</span></p>
+                    {% if factura.pago %}
+                    <p><strong>Associated Payment ID:</strong> 
+                        {% if factura.pago.cuota_id %}
+                            <a href="{{ url_for('cobranzas.detail_fee', cuota_id=factura.pago.cuota_id) }}">
+                                Payment #{{ factura.pago.id }} (Fee: {{ factura.pago.cuota.periodo }})
+                            </a>
+                        {% else %}
+                             Payment #{{ factura.pago.id }} (General Payment)
+                             {# Consider a general payment detail view if it exists #}
+                        {% endif %}
+                        <br><small class="text-muted">Paid on: {{ factura.pago.fecha_pago.strftime('%d/%m/%Y') if factura.pago.fecha_pago else 'N/A' }}</small>
+                    </p>
+                    {% else %}
+                    <p><strong>Associated Payment:</strong> <span class="text-muted">Not linked to a specific payment record.</span></p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <hr>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5><i class="fas fa-list-ul me-1"></i> Concept / Details:</h5>
+                    <div class="p-3 bg-light border rounded">
+                        <pre style="white-space: pre-wrap; word-wrap: break-word; margin:0; font-family: inherit;">{{ factura.detalles }}</pre>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="card-footer text-end">
+            <a href="{{ url_for('facturacion.list_invoices') }}" class="btn btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Invoices List</a>
+            <a href="{{ url_for('facturacion.download_invoice_pdf', factura_id=factura.id) }}" class="btn btn-primary">
+                <i class="fas fa-file-pdf me-1"></i> Download PDF
+            </a>
+            {# Add other actions like 'Anular Factura' if applicable #}
+            {# {% if factura.estado == 'emitida' %}
+            <form action="{{ url_for('facturacion.anular_factura', factura_id=factura.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this invoice? This action cannot be undone.');">
+                <button type="submit" class="btn btn-danger"><i class="fas fa-ban me-1"></i> Anular Factura</button>
+            </form>
+            {% endif %} #}
+        </div>
+    </div>
+</div>
+{% endblock %}
