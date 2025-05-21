@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %} {# Assuming you might create form macros #}
+
+{% block title %}{{ title }} - Profesionales - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ legend }}</h2>
+        <form method="POST" action=""> {# Action URL will be set by the view #}
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{ legend }}</legend>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ render_field(form.first_name, class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.last_name, class="form-control") }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ render_field(form.matricula, class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.status_matricula, class="form-select") }}
+                    </div>
+                </div>
+
+                {{ render_field(form.vigencia_matricula, class="form-control", type="date") }}
+                {{ render_field(form.email, class="form-control") }}
+                {{ render_field(form.phone_number, class="form-control") }}
+                {{ render_field(form.address, class="form-control", rows="3") }}
+                {{ render_field(form.title, class="form-control") }}
+                {{ render_field(form.specialization, class="form-control") }}
+                {{ render_field(form.university, class="form-control") }}
+                {{ render_field(form.cbu, class="form-control") }}
+
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

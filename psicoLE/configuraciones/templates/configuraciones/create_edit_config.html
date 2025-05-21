@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+
+{% block title %}{{ title }} - Configuraciones - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ legend }}</h2>
+        <form method="POST" action=""> {# Action URL will be set by the view #}
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{ legend }}</legend>
+                
+                {# For key, pass readonly attribute if set in form field's render_kw #}
+                {{ render_field(form.key, class="form-control", readonly=form.key.render_kw.get('readonly', false)) }}
+                {{ render_field(form.value, class="form-control") }}
+                {{ render_field(form.description, class="form-control", rows=form.description.render_kw.get('rows', 3)) }}
+
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('configuraciones.list_configurations') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
