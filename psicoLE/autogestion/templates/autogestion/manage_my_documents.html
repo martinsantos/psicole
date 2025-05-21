@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - Autogestión - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([{'text': 'My Documents'}]) }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3"><i class="fas fa-folder-open me-2"></i>{{ title }}</h2>
+    </div>
+    <p class="lead mb-4">Upload and manage your professional documents (e.g., CV, Títulos, Certificados).</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-upload me-2"></i>Upload New Document</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('autogestion.manage_my_documents') }}" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ render_field(form.nombre_documento, placeholder="e.g., CV Actualizado, Título de Grado") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.tipo_documento) }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                     {{ render_field(form.document_file, help_text="Allowed files: PDF, DOC, DOCX, JPG, PNG, TXT.") }}
+                </div>
+                {{ form.submit_upload(class="btn btn-primary") }} {# Icon can be added by form macro #}
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-list-alt me-2"></i>My Uploaded Documents</h4>
+        </div>
+        <div class="card-body">
+            {% if documents %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Document Name</th>
+                    <th>Type</th>
+                    <th>Upload Date</th>
+                    <th>File Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr>
+                    <td>{{ doc.nombre_documento }}</td>
+                    <td>{{ doc.tipo_documento or 'N/A' }}</td>
+                    <td>{{ doc.fecha_carga.strftime('%Y-%m-%d %H:%M:%S') if doc.fecha_carga else 'N/A' }}</td>
+                    <td>{{ doc.archivo_filename }}</td>
+                    <td>
+                        <a href="{{ url_for('autogestion.download_my_document', document_id=doc.id) }}" class="btn btn-sm btn-success" title="Download">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                        <form action="{{ url_for('autogestion.delete_my_document', document_id=doc.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this document: {{ doc.nombre_documento }}? This action cannot be undone.');">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>You have not uploaded any documents yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

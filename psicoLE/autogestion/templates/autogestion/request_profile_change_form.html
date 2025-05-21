@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - Autogestión - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('autogestion.view_my_profile'), 'text': 'My Profile & Requests'},
+    {'text': 'Request Profile Changes'}
+]) }}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                 <h2 class="h4 mb-0"><i class="fas fa-edit me-2"></i>{{ title }}</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Edit the fields below for which you want to request changes. Only modified fields will be submitted for review.</p>
+                <p class="card-text"><small class="text-muted">Your current data is pre-filled in the form for your reference.</small></p>
+
+                <div class="alert alert-secondary my-4">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle me-1"></i>Current Information (Read-Only)</h5>
+                     <dl class="row mb-0 small">
+                        <dt class="col-sm-4">Current Email:</dt><dd class="col-sm-8">{{ professional.email }}</dd>
+                        <dt class="col-sm-4">Current Phone:</dt><dd class="col-sm-8">{{ professional.phone_number or 'N/A' }}</dd>
+                        <dt class="col-sm-4">Current Address:</dt><dd class="col-sm-8">{{ professional.address|nl2br or 'N/A' }}</dd>
+                        <dt class="col-sm-4">Current CBU:</dt><dd class="col-sm-8">{{ professional.cbu or 'N/A' }}</dd>
+                    </dl>
+                </div>
+
+                <form method="POST" action="{{ url_for('autogestion.request_profile_change') }}" class="mt-4">
+                    {{ form.hidden_tag() }}
+                    <fieldset class="form-group">
+                        <legend class="border-bottom mb-4 visually-hidden">Editable Fields</legend>
+                        
+                        {{ render_field(form.email, placeholder="new.email@example.com", description="Enter your new email address.") }}
+                        {{ render_field(form.phone_number, placeholder="+54 9 XXX XXXXXXX", description="Enter your new phone number.") }}
+                        {{ render_field(form.address, rows=3, placeholder="Street Address, City, Province", description="Enter your new address.") }}
+                        {{ render_field(form.cbu, placeholder="CBU for payments (22 digits)", description="Enter your new CBU.") }}
+
+                    </fieldset>
+                    <div class="form-group mt-4 text-end">
+                        <a href="{{ url_for('autogestion.view_my_profile') }}" class="btn btn-secondary me-2"><i class="fas fa-times me-1"></i> Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }} {# Icon can be added by form macro #}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
