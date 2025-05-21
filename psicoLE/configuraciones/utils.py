@@ -42,3 +42,9 @@ def set_config_value(key, value, description=None):
         db.session.rollback()
         print(f"Error setting config key '{key}': {e}")
         return False
+
+def ensure_config_exists(key, default_value, description):
+    """Helper to ensure a specific config key exists."""
+    if get_config_value(key) is None:
+        set_config_value(key, default_value, description)
+        print(f"Configuration '{key}' set to default: '{default_value}'.")

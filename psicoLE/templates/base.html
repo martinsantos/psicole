@@ -25,6 +25,28 @@
                         <a class="nav-link" href="{{ url_for('configuraciones.list_configurations') }}">Configurations</a>
                     </li>
                     {% endif %}
+                    {% if current_user.is_authenticated and current_user.role and current_user.role.name in ['admin', 'staff'] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cobranzas.list_fees') }}">Fees (Cobranzas)</a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role and current_user.role.name in ['admin', 'staff'] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('facturacion.list_invoices') }}">Invoicing (Facturación)</a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role and current_user.role.name in ['admin', 'staff'] %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Reports
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('reports.overdue_fees_report') }}">Overdue Fees Report</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('reports.payments_received_report') }}">Payments Received Report</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('reports.professional_account_status_report') }}">Professional Account Status</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
                     {# Add other navigation links here as needed #}
                 </ul>
                 <ul class="navbar-nav ms-auto">
@@ -38,7 +60,8 @@
                                 {% if current_user.role and current_user.role.name == 'professional' %}
                                     {% set user_professional = get_professional_by_user_id(current_user.id) %}
                                     {% if user_professional %}
-                                    <li><a class="dropdown-item" href="{{ url_for('profesionales.detail_professional', professional_id=user_professional.id) }}">My Profile</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('profesionales.detail_professional', professional_id=user_professional.id) }}">My Profile (Data)</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('autogestion.financial_dashboard') }}">My Finances (Autogestión)</a></li>
                                     {% endif %}
                                 {% endif %}
                                 <!-- Add other user-specific links like 'Settings' here -->

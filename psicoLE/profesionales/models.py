@@ -28,6 +28,13 @@ class Professional(db.Model):
     # Assuming User class will be available in the SQLAlchemy metadata context.
     user = relationship('User', backref=db.backref('professional', uselist=False))
 
+    # Back-references for Cobranzas
+    cuotas = relationship('Cuota', back_populates='professional', lazy='dynamic', order_by='Cuota.periodo.desc()')
+    pagos = relationship('Pago', back_populates='professional', lazy='dynamic', order_by='Pago.fecha_pago.desc()')
+
+    # Back-reference for Facturacion
+    facturas = relationship('Factura', back_populates='professional', lazy='dynamic', order_by='Factura.fecha_emision.desc()')
+
 
     def __init__(self, first_name, last_name, matricula, status_matricula, email, user_id=None, vigencia_matricula=None, phone_number=None, address=None, title=None, specialization=None, university=None, cbu=None):
         self.user_id = user_id

@@ -37,10 +37,13 @@
         </div>
         <div class="card-footer">
             <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary">Back to List</a>
+            {% if current_user.is_authenticated and current_user.professional and current_user.professional.id == professional.id %}
+                 <a href="{{ url_for('autogestion.financial_dashboard') }}" class="btn btn-info">View My Financials</a>
+            {% endif %}
             {% if current_user.role.name in ['admin', 'staff'] or (current_user.role.name == 'professional' and professional.user_id == current_user.id) %}
                 {# Professionals can edit their own profile if linked #}
                 {% if current_user.role.name in ['admin', 'staff'] or (professional.user_id == current_user.id) %}
-                    <a href="{{ url_for('profesionales.edit_professional', professional_id=professional.id) }}" class="btn btn-warning">Edit Profile</a>
+                    <a href="{{ url_for('profesionales.edit_professional', professional_id=professional.id) }}" class="btn btn-warning">Edit Profile Data</a>
                 {% endif %}
             {% endif %}
         </div>

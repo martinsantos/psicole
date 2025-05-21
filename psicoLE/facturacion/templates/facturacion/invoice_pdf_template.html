@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura {{ factura.numero_factura }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #555;
+        }
+        .college-details, .invoice-details, .client-details, .items-table, .footer {
+            margin-bottom: 20px;
+        }
+        .college-details p, .client-details p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+        .invoice-details {
+            text-align: right;
+        }
+        .invoice-details p {
+            margin: 5px 0;
+        }
+        .items-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .items-table th {
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+        .total-section {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .total-section p {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            margin-top: 30px;
+        }
+        .logo-placeholder { /* Basic styling for logo placeholder */
+            width: 150px;
+            height: 75px;
+            background-color: #f0f0f0;
+            border: 1px dashed #ccc;
+            display: inline-block;
+            text-align: center;
+            line-height: 75px;
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {# <div class="logo-placeholder">Logo Aquí</div> #}
+            <h1>Factura</h1>
+        </div>
+
+        <div class="college-details">
+            <p><strong>Colegio de Psicólogos de la Provincia X</strong></p>
+            <p>Dirección: Calle Falsa 123, Ciudad, Provincia</p>
+            <p>Teléfono: (123) 456-7890</p>
+            <p>Email: contacto@colegiopsi.org</p>
+            <p>CUIT: 30-12345678-9</p>
+        </div>
+
+        <hr>
+
+        <div class="invoice-details">
+            <p><strong>Factura Nro:</strong> {{ factura.numero_factura }}</p>
+            <p><strong>Fecha de Emisión:</strong> {{ factura.fecha_emision.strftime('%d/%m/%Y') if factura.fecha_emision else 'N/A' }}</p>
+            {% if factura.pago and factura.pago.fecha_pago %}
+            <p><strong>Fecha de Pago:</strong> {{ factura.pago.fecha_pago.strftime('%d/%m/%Y') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="client-details">
+            <h4>Cliente:</h4>
+            <p><strong>Nombre:</strong> {{ factura.cliente_nombre }}</p>
+            <p><strong>Identificación (DNI/CUIT):</strong> {{ factura.cliente_identificacion or 'N/A' }}</p>
+            {% if factura.professional %}
+                <p><strong>Profesional Asociado:</strong> {{ factura.professional.first_name }} {{ factura.professional.last_name }} (Matrícula: {{ factura.professional.matricula }})</p>
+            {% endif %}
+        </div>
+
+        <div class="items-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <pre style="white-space: pre-wrap; word-wrap: break-word; margin:0;">{{ factura.detalles }}</pre>
+                        </td>
+                        <td>${{ "%.2f"|format(factura.monto_total) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="total-section">
+            <p>Total: ${{ "%.2f"|format(factura.monto_total) }}</p>
+        </div>
+
+        <div class="footer">
+            <p>Gracias por su pago.</p>
+            <p>Esta es una factura generada automáticamente por el sistema PsicoLE.</p>
+        </div>
+    </div>
+</body>
+</html>

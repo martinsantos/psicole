@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+
+{% block title %}{{ title }} - Reports - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>{{ title }}</h2>
+
+    <form method="GET" action="{{ url_for('reports.overdue_fees_report') }}" class="mb-4 p-3 border rounded bg-light">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                {{ render_field(form.start_date, class="form-control", type="date", label_visible=true, label_text="Due Date From:") }}
+            </div>
+            <div class="col-md-4">
+                {{ render_field(form.end_date, class="form-control", type="date", label_visible=true, label_text="Due Date To:") }}
+            </div>
+            <div class="col-md-2">
+                {{ form.submit_filter(class="btn btn-primary w-100") }}
+            </div>
+            <div class="col-md-2">
+                 <a href="{{ url_for('reports.overdue_fees_report') }}" class="btn btn-secondary w-100">Clear Filters</a>
+            </div>
+        </div>
+    </form>
+
+    {% if report_data %}
+    <div class="alert alert-info">
+        <strong>Total Overdue Amount (for filtered results): ${{ "%.2f"|format(total_overdue_amount) }}</strong>
+    </div>
+    <table class="table table-striped table-hover table-sm">
+        <thead>
+            <tr>
+                <th>Professional Name</th>
+                <th>Matrícula</th>
+                <th>Fee Periodo</th>
+                <th>Due Date</th>
+                <th>Amount Due</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in report_data %}
+            <tr>
+                <td>{{ item.professional_name }}</td>
+                <td>{{ item.matricula }}</td>
+                <td>{{ item.periodo }}</td>
+                <td>{{ item.fecha_vencimiento.strftime('%Y-%m-%d') if item.fecha_vencimiento else 'N/A' }}</td>
+                <td>${{ "%.2f"|format(item.amount_due) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-warning">No overdue fees found matching your criteria.</div>
+    {% endif %}
+</div>
+{% endblock %}

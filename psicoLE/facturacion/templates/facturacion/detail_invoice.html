@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Factura {{ factura.numero_factura }} - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Invoice: {{ factura.numero_factura }}</h3>
+            <span class="badge bg-{{ 'success' if factura.estado == 'emitida' else 'danger' if factura.estado == 'anulada' else 'secondary' }} fs-6">{{ factura.estado|title }}</span>
+        </div>
+        <div class="card-body">
+            <h4>Client Information</h4>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Client Name:</strong> {{ factura.cliente_nombre }}</p>
+                    <p><strong>Client Tax ID / DNI:</strong> {{ factura.cliente_identificacion or 'N/A' }}</p>
+                </div>
+                {% if factura.professional %}
+                <div class="col-md-6">
+                    <p><strong>Associated Professional:</strong> 
+                        <a href="{{ url_for('profesionales.detail_professional', professional_id=factura.professional.id) }}">
+                            {{ factura.professional.first_name }} {{ factura.professional.last_name }}
+                        </a>
+                    </p>
+                    <p><strong>Matrícula:</strong> {{ factura.professional.matricula }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <h4>Invoice Details</h4>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Invoice Number:</strong> {{ factura.numero_factura }}</p>
+                    <p><strong>Emission Date:</strong> {{ factura.fecha_emision.strftime('%Y-%m-%d') if factura.fecha_emision else 'N/A' }}</p>
+                    <p><strong>Total Amount:</strong> ${{ "%.2f"|format(factura.monto_total) }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Status:</strong> {{ factura.estado|title }}</p>
+                    {% if factura.pago %}
+                    <p><strong>Associated Payment ID:</strong> 
+                        <a href="{{ url_for('cobranzas.detail_fee', cuota_id=factura.pago.cuota_id) if factura.pago.cuota_id else '#no-cuota-link-for-pago-'~factura.pago.id }}">
+                            {{ factura.pago.id }} (Paid on: {{ factura.pago.fecha_pago.strftime('%Y-%m-%d') if factura.pago.fecha_pago else 'N/A' }})
+                        </a>
+                         {# Note: Link for payment detail might need adjustment if general payment detail page exists #}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <h5>Concept / Details:</h5>
+                    <pre>{{ factura.detalles }}</pre>
+                </div>
+            </div>
+
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('facturacion.list_invoices') }}" class="btn btn-secondary">Back to Invoices List</a>
+            <a href="{{ url_for('facturacion.download_invoice_pdf', factura_id=factura.id) }}" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i> Download PDF
+            </a>
+            {# Add other actions like 'Anular Factura' if applicable #}
+            {# {% if factura.estado == 'emitida' %}
+            <form action="{{ url_for('facturacion.anular_factura', factura_id=factura.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this invoice? This action cannot be undone.');">
+                <button type="submit" class="btn btn-danger">Anular Factura</button>
+            </form>
+            {% endif %} #}
+        </div>
+    </div>
+</div>
+{% endblock %}

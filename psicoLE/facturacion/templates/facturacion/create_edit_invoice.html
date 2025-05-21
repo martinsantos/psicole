@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+
+{% block title %}{{ title }} - Facturación - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ title }}</h2>
+        
+        {% if pago %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Payment Information</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Payment ID:</strong> {{ pago.id }}</p>
+                <p><strong>Date:</strong> {{ pago.fecha_pago.strftime('%Y-%m-%d %H:%M:%S') if pago.fecha_pago else 'N/A' }}</p>
+                <p><strong>Amount:</strong> ${{ "%.2f"|format(pago.monto) }}</p>
+                <p><strong>Professional:</strong> {{ pago.professional.first_name }} {{ pago.professional.last_name if pago.professional else 'N/A' }}</p>
+                {% if pago.cuota %}
+                <p><strong>Related Fee:</strong> Cuota {{ pago.cuota.periodo }} (ID: {{ pago.cuota.id }})</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="POST" action=""> {# Action URL will be set by the view #}
+            {{ form.hidden_tag() }} {# Includes pago_id if set #}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Invoice Details</legend>
+
+                {% if form.professional_id.data %}
+                    <div class="mb-3">
+                        <label class="form-label">Professional (Associated with Payment/Invoice)</label>
+                        <input type="text" readonly class="form-control" value="{{ form.professional_id.data.first_name }} {{ form.professional_id.data.last_name }} ({{ form.professional_id.data.matricula }})">
+                         {# This makes professional_id effectively readonly if pre-filled #}
+                    </div>
+                {% elif form.professional_id %} {# Only render if it's part of the form for standalone invoices #}
+                     {{ render_field(form.professional_id, class="form-select") }}
+                {% endif %}
+                
+                {{ render_field(form.cliente_nombre, class="form-control") }}
+                {{ render_field(form.cliente_identificacion, class="form-control") }}
+                {{ render_field(form.fecha_emision, class="form-control", type="date") }}
+                {{ render_field(form.monto_total, class="form-control") }}
+                {{ render_field(form.detalles, class="form-control", rows=form.detalles.render_kw.get('rows',3), description=form.detalles.description) }}
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                {% if pago %}
+                <a href="{{ url_for('cobranzas.detail_fee', cuota_id=pago.cuota_id) if pago.cuota_id else url_for('cobranzas.list_fees') }}" class="btn btn-secondary">Cancel</a>
+                {% else %}
+                <a href="{{ url_for('facturacion.list_invoices') }}" class="btn btn-secondary">Cancel</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
