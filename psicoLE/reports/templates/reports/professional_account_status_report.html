@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+
+{% block title %}{{ title }} - Reports - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>{{ title }}</h2>
+
+    <form method="POST" action="{{ url_for('reports.professional_account_status_report') }}" class="mb-4 p-3 border rounded bg-light">
+        {{ form.hidden_tag() }} {# If using CSRF from Flask-WTF #}
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                {{ render_field(form.professional_id, class="form-select", label_visible=true) }}
+            </div>
+            <div class="col-md-4">
+                {{ form.submit_report(class="btn btn-primary w-100") }}
+            </div>
+        </div>
+         {% if form.professional_id.errors %}
+            <div class="alert alert-danger mt-2">
+                {% for error in form.professional_id.errors %}
+                    <span>{{ error }}</span><br>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </form>
+
+    {% if professional_data %}
+    <div class="card">
+        <div class="card-header">
+            <h4>Account Status for: {{ professional_data.first_name }} {{ professional_data.last_name }} (Matrícula: {{ professional_data.matricula }})</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>Overall Account Balance: ${{ "%.2f"|format(overall_balance) }}</strong>
+                (Total Expected: ${{ "%.2f"|format(fees|sum(attribute='monto_esperado')) }} - Total Confirmed Payments: ${{ "%.2f"|format(payments|selectattr('confirmado')|sum(attribute='monto')) }})
+            </div>
+
+            <h5 class="mt-4">Fees (Cuotas)</h5>
+            {% if fees %}
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Periodo</th>
+                        <th>Due Date</th>
+                        <th>Expected</th>
+                        <th>Paid</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fee in fees %}
+                    <tr>
+                        <td><a href="{{ url_for('cobranzas.detail_fee', cuota_id=fee.id) }}">{{ fee.periodo }}</a></td>
+                        <td>{{ fee.fecha_vencimiento.strftime('%Y-%m-%d') if fee.fecha_vencimiento else 'N/A' }}</td>
+                        <td>${{ "%.2f"|format(fee.monto_esperado) }}</td>
+                        <td>${{ "%.2f"|format(fee.monto_pagado) }}</td>
+                        <td><span class="badge bg-{{ 'success' if fee.estado == 'paid' else 'warning' if fee.estado in ['pending', 'partially_paid'] else 'danger' if fee.estado == 'overdue' else 'secondary' }}">{{ fee.estado|title }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No fees found for this professional.</p>
+            {% endif %}
+
+            <h5 class="mt-4">Payments</h5>
+            {% if payments %}
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Payment Date</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Linked Fee Period</th>
+                        <th>Confirmed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.fecha_pago.strftime('%Y-%m-%d %H:%M:%S') if payment.fecha_pago else 'N/A' }}</td>
+                        <td>${{ "%.2f"|format(payment.monto) }}</td>
+                        <td>{{ payment.metodo_pago.replace('_', ' ').title() if payment.metodo_pago else 'N/A' }}</td>
+                        <td>{{ payment.referencia_pago or 'N/A' }}</td>
+                        <td>
+                            {% if payment.cuota %}
+                                <a href="{{ url_for('cobranzas.detail_fee', cuota_id=payment.cuota.id) }}">{{ payment.cuota.periodo }}</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if payment.confirmado %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-warning">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No payments found for this professional.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% elif request.method == 'POST' %} 
+        {# If form submitted but no professional_data (e.g. validation error on professional_id not caught by form.errors but by logic) #}
+        <div class="alert alert-warning">Please select a professional to generate the report.</div>
+    {% endif %}
+</div>
+{% endblock %}
