@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ config.APP_NAME }}{% endblock %}</title>
+    <style type="text/css">
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .header img {
+            max-width: 150px;
+            height: auto;
+        }
+        .content {
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='img/logo.png', _external=True) }}" alt="{{ config.APP_NAME }} Logo">
+            <h1 style="color: #2c3e50; margin-bottom: 0;">{{ config.APP_NAME }}</h1>
+        </div>
+        
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+        
+        <div class="footer">
+            <p>© {{ now.year }} {{ config.APP_NAME }}. Todos los derechos reservados.</p>
+            <p>
+                <a href="{{ url_for('main.index', _external=True) }}" style="color: #3498db; text-decoration: none;">Inicio</a> |
+                <a href="{{ url_for('main.contact', _external=True) }}" style="color: #3498db; text-decoration: none; margin: 0 10px;">Contacto</a> |
+                <a href="{{ url_for('main.terms', _external=True) }}" style="color: #3498db; text-decoration: none;">Términos y condiciones</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 11px; color: #999;">
+                Este es un correo automático, por favor no respondas a este mensaje.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

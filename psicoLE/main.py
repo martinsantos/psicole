@@ -7,41 +7,15 @@ from psicoLE.auth.models import User, Role
 from psicoLE.profesionales.models import Professional
 from psicoLE.configuraciones.models import Configuration
 from psicoLE.cobranzas.models import Cuota, Pago
-from psicoLE.facturacion.models import Factura
-from psicoLE.autogestion.models import DataChangeRequest, DocumentoProfesional 
-import os # For UPLOAD_FOLDER
+from psicoLE.facturacion.models import Factura # Import Factura
 
-app = Flask(__name__, instance_relative_config=True) # instance_relative_config=True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///psicole.db' 
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///psicole.db' # Using SQLite for simplicity
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key' 
-
-# File Upload Configuration
-UPLOAD_FOLDER_NAME = 'professional_documents'
-# app.instance_path will point to the 'instance' folder at the root of your project
-app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads', UPLOAD_FOLDER_NAME)
-app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'}
-
-# Ensure instance folder and upload folder exist
-try:
-    os.makedirs(app.instance_path, exist_ok=True)
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-except OSError as e:
-    print(f"Error creating instance/upload folders: {e}")
-
+app.config['SECRET_KEY'] = 'your_secret_key' # Added a secret key for session management, etc.
 
 # Initialize SQLAlchemy with the app using the shared db instance
 db.init_app(app)
-
-# Utility function for file uploads
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-# Make allowed_file available in templates or views if needed by adding to app context
-@app.context_processor
-def utility_processor():
-    return dict(allowed_file=allowed_file)
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -75,9 +49,6 @@ app.register_blueprint(reports_bp, url_prefix='/reports')
 from psicoLE.autogestion.views import autogestion_bp
 app.register_blueprint(autogestion_bp, url_prefix='/autogestion')
 
-from psicoLE.admin_dashboard.views import admin_dashboard_bp
-app.register_blueprint(admin_dashboard_bp, url_prefix='/admin') # Using /admin prefix
-
 
 @app.route('/')
 def hello_world():
@@ -95,19 +66,7 @@ def inject_utility_functions():
         if user_id is None:
             return None
         return Professional.query.filter_by(user_id=user_id).first()
-    
-    # Context processor for pending data changes count
-    # Moved here as it needs to be registered with the app
-    from psicoLE.autogestion.models import DataChangeRequest # Import here to avoid circular if used early
-    def pending_data_changes_count_fn():
-        if current_user.is_authenticated and current_user.role and current_user.role.name in ['admin', 'staff']:
-            return DataChangeRequest.query.filter_by(status='pending').count()
-        return 0
-
-    return dict(
-        get_professional_by_user_id=get_professional_by_user_id_fn,
-        pending_data_changes_count=pending_data_changes_count_fn
-    )
+    return dict(get_professional_by_user_id=get_professional_by_user_id_fn)
 
 def initialize_default_configurations():
     from psicoLE.configuraciones.utils import set_config_value, get_config_value
@@ -174,18 +133,4 @@ if __name__ == '__main__':
         # You could explicitly initialize it here too if preferred:
         # get_mp_sdk() 
 
-    # Error Handlers
-    @app.errorhandler(403)
-    def forbidden_error(error):
-        return render_template('errors/403.html'), 403
-
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return render_template('errors/404.html'), 404
-
-    @app.errorhandler(500)
-    def internal_error(error):
-        # db.session.rollback() # Optional: Rollback session in case of DB error leading to 500
-        return render_template('errors/500.html'), 500
-    
     app.run(debug=True, host='0.0.0.0', port=5001)

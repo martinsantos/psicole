@@ -53,15 +53,7 @@ def login():
             # For now, let's redirect to the main page.
             # A better target would be a user-specific dashboard.
             next_page = request.args.get('next')
-            
-            # Role-based redirect
-            if current_user.role:
-                if current_user.role.name in ['admin', 'staff']:
-                    return redirect(next_page or url_for('admin_dashboard.admin_dashboard_main'))
-                elif current_user.role.name == 'professional':
-                    return redirect(next_page or url_for('autogestion.autogestion_main_dashboard'))
-            
-            return redirect(next_page or url_for('hello_world')) # Default fallback
+            return redirect(next_page or url_for('hello_world'))
         else:
             flash('Login Unsuccessful. Please check username and password', 'danger')
     return render_template('login.html', title='Login', form=form)

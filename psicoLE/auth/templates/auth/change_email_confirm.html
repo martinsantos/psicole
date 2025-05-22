@@ -1,0 +1,40 @@
+{% extends "auth/base.html" %}
+
+{% block title %}Correo Electrónico Actualizado - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <div class="mb-4">
+        <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+    </div>
+    
+    <h2 class="h4 text-gray-900 mb-3">¡Correo Electrónico Actualizado!</h2>
+    
+    <div class="alert alert-success">
+        <p class="mb-0">
+            <i class="fas fa-check-circle me-2"></i>
+            Tu dirección de correo electrónico ha sido actualizada correctamente.
+        </p>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-body text-start">
+            <p class="mb-1"><strong>Nuevo correo electrónico:</strong></p>
+            <p class="h5 mb-0">{{ current_user.email }}</p>
+        </div>
+    </div>
+    
+    <p class="text-muted mb-4">
+        Hemos enviado un correo de confirmación a tu nueva dirección. Por favor, verifica tu bandeja de entrada.
+    </p>
+    
+    <div class="d-grid gap-2 d-md-block">
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="fas fa-home me-2"></i>Ir al Inicio
+        </a>
+        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary">
+            <i class="fas fa-user me-2"></i>Mi Perfil
+        </a>
+    </div>
+</div>
+{% endblock %}

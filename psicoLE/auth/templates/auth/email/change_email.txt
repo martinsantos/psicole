@@ -1,0 +1,21 @@
+Confirmar Cambio de Correo - PsicoLE
+
+Hola {{ user.username }},
+
+Hemos recibido una solicitud para cambiar el correo electrónico asociado a tu cuenta de PsicoLE.
+
+Detalles del cambio:
+- Correo actual: {{ current_email }}
+- Nuevo correo: {{ new_email }}
+
+Para confirmar este cambio, por favor visita el siguiente enlace:
+{{ confirmation_link }}
+
+Este enlace expirará en {{ expire_hours }} horas por razones de seguridad.
+
+Si no solicitaste este cambio, por favor ignora este correo o contáctanos de inmediato en [correo de soporte].
+
+---
+© {{ now.year }} PsicoLE. Todos los derechos reservados.
+
+Este es un correo automático, por favor no respondas a este mensaje.

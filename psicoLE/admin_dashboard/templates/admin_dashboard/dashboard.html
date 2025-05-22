@@ -1,59 +1,285 @@
-{% extends "base.html" %}
-{% from "_breadcrumbs.html" import render_breadcrumbs %}
+{% extends "admin_dashboard/base.html" %}
+{% from "_macros.html" import render_stat_card %}
 
-{% block title %}{{ title }} - PsicoLE{% endblock %}
+{% block title %}Panel de Administración - PsicoLE{% endblock %}
 
-{% block content %}
-{{ render_breadcrumbs([{'text': 'Admin Dashboard'}]) }}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3"><i class="fas fa-tachometer-alt me-2"></i>{{ title }}</h2>
-        <span class="text-muted">Welcome, {{ current_user.username }}!</span>
+{% block dashboard_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Panel de Control</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-home"></i> Inicio
+            </a>
+        </div>
     </div>
+</div>
 
-    <!-- Key Statistics -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm text-center h-100">
-                <div class="card-body">
-                    <div class="display-4 text-primary"><i class="fas fa-users"></i></div>
-                    <h5 class="card-title mt-3">{{ stats.active_professionals }}</h5>
-                    <p class="card-text">Active Professionals</p>
-                </div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm text-center h-100">
-                <div class="card-body">
-                    <div class="display-4 text-warning"><i class="fas fa-file-invoice-dollar"></i></div>
-                    <h5 class="card-title mt-3">{{ stats.pending_fees_count }}</h5>
-                    <p class="card-text">Pending Fees</p>
-                    <small class="text-muted">Total: ${{ "%.2f"|format(stats.total_pending_amount) }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm text-center h-100">
-                <div class="card-body">
-                    <div class="display-4 text-success"><i class="fas fa-hand-holding-usd"></i></div>
-                    <h5 class="card-title mt-3">{{ stats.payments_today_count }}</h5>
-                    <p class="card-text">Payments Received Today</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm text-center h-100">
-                <div class="card-body">
-                    <div class="display-4 text-danger"><i class="fas fa-user-edit"></i></div>
-                    <h5 class="card-title mt-3">{{ stats.pending_data_changes }}</h5>
-                    <p class="card-text">Pending Data Changes</p>
-                    {% if stats.pending_data_changes > 0 %}
-                    <a href="{{ url_for('admin_dashboard.list_pending_data_changes') }}" class="btn btn-sm btn-outline-danger mt-1">Review Now</a>
-                    {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+<!-- Estadísticas de Usuarios -->
+<div class="row mb-4">
+    <!-- Total de Usuarios -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total de Usuarios</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Administradores -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Administradores</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.admin_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-shield fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Personal</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.staff_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-tie fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profesionales -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Profesionales</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% if stats.professional_users is defined %}
+                                {{ stats.professional_users }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-md fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stats.active_professionals is defined or stats.pending_data_changes is defined or stats.pending_payments is defined or stats.total_earnings is defined %}
+<!-- Estadísticas Adicionales -->
+<div class="row mb-4">
+    {% if stats.active_professionals is defined %}
+    <!-- Profesionales Activos -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Profesionales Activos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_professionals }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stats.pending_data_changes is defined %}
+    <!-- Cambios Pendientes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Cambios Pendientes</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_data_changes }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stats.pending_payments is defined %}
+    <!-- Pagos Pendientes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Pagos Pendientes</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_payments }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stats.total_earnings is defined %}
+    <!-- Ingresos Totales -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Ingresos Totales</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            ${{ "%0.2f"|format(stats.total_earnings|float) }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Usuarios Recientes -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Usuarios Recientes</h6>
+    </div>
+    <div class="card-body">
+        {% if recent_users %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="recentUsersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Fecha de Creación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.role %}
+                                    {{ user.role.name|capitalize }}
+                                {% else %}
+                                    Sin Rol
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info mb-0">No hay usuarios registrados.</div>
+        {% endif %}
+    </div>
+</div>
+
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solicitudes Pendientes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Solicitudes Pendientes</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_requests|default(0) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documentos por Revisar -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Documentos por Revisar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.documents_pending_review|default(0) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <hr class="my-4">
 

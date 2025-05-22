@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Usar código de recuperación{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-warning bg-opacity-25">
+                    <h4 class="mb-0">Código de recuperación</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="bi bi-exclamation-triangle-fill"></i> Acceso de recuperación</h5>
+                        <p class="mb-0">
+                            Usa uno de tus códigos de recuperación para acceder a tu cuenta. 
+                            Cada código solo se puede usar una vez.
+                        </p>
+                    </div>
+                    
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.recovery_code.label(class="form-label") }}
+                            {{ form.recovery_code(class="form-control form-control-lg" + (' is-invalid' if form.recovery_code.errors else ''), 
+                                              placeholder="ej: abcd-efgh-ijkl") }}
+                            {% if form.recovery_code.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.recovery_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="form-text">
+                                    Ingresa uno de los códigos de recuperación que guardaste cuando configuraste la autenticación en dos pasos.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-warning") }}
+                            <a href="{{ url_for('auth.mfa_verify.verify_mfa') }}" class="btn btn-outline-secondary">
+                                Volver a la verificación normal
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-question-circle-fill"></i> ¿No encuentras tus códigos?</h5>
+                        <p class="mb-0">
+                            Si no tienes acceso a tus códigos de recuperación, 
+                            <a href="{{ url_for('auth.login.reset_password_request') }}" class="alert-link">restablece tu contraseña</a> 
+                            siguiendo el proceso de recuperación de cuenta.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const recoveryCodeInput = document.getElementById('{{ form.recovery_code.id }}');
+        if (recoveryCodeInput) {
+            recoveryCodeInput.focus();
+            
+            // Format recovery code as user types (add dashes)
+            recoveryCodeInput.addEventListener('input', function(e) {
+                // Remove all non-alphanumeric characters and convert to lowercase
+                let value = this.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                
+                // Add dashes for better readability (every 4 characters)
+                let formattedValue = '';
+                for (let i = 0; i < value.length; i++) {
+                    if (i > 0 && i % 4 === 0) {
+                        formattedValue += '-';
+                    }
+                    formattedValue += value[i];
+                }
+                
+                // Limit to 3 groups of 4 characters (12 characters total)
+                if (formattedValue.length > 14) { // 3 groups of 4 + 2 dashes
+                    formattedValue = formattedValue.substring(0, 14);
+                }
+                
+                this.value = formattedValue;
+            });
+        }
+    });
+</script>
+{% endblock %}

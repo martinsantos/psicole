@@ -36,12 +36,6 @@ class Professional(db.Model):
     # Back-reference for Facturacion
     facturas = relationship('Factura', back_populates='professional', lazy='dynamic', order_by='Factura.fecha_emision.desc()')
 
-    # Back-reference for DataChangeRequest
-    data_change_requests = relationship('DataChangeRequest', back_populates='professional', lazy='dynamic', order_by='DataChangeRequest.requested_at.desc()')
-
-    # Back-reference for DocumentoProfesional
-    documentos = relationship('DocumentoProfesional', back_populates='professional', lazy='dynamic', order_by='DocumentoProfesional.fecha_carga.desc()', cascade="all, delete-orphan")
-
 
     def __init__(self, first_name, last_name, matricula, status_matricula, email, user_id=None, vigencia_matricula=None, phone_number=None, address=None, title=None, specialization=None, university=None, cbu=None, autoriza_debito_automatico=False):
         self.user_id = user_id

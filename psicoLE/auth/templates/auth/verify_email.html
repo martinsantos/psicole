@@ -1,0 +1,59 @@
+{% extends "auth/base.html" %}
+
+{% block title %}Verificar Correo Electrónico - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <div class="mb-4">
+        <i class="fas fa-envelope text-primary" style="font-size: 5rem;"></i>
+    </div>
+    
+    <h2 class="h4 text-gray-900 mb-3">Verifica tu correo electrónico</h2>
+    
+    {% if current_user.is_verified %}
+        <div class="alert alert-success">
+            <p class="mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                ¡Tu correo electrónico ya ha sido verificado!
+            </p>
+        </div>
+        
+        <p class="text-muted mb-4">
+            Gracias por verificar tu cuenta. Ahora puedes acceder a todas las funciones de la plataforma.
+        </p>
+        
+        <div class="d-grid gap-2 d-md-block">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Ir al inicio
+            </a>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                Hemos enviado un correo de verificación a <strong>{{ current_user.email }}</strong>.
+            </p>
+        </div>
+        
+        <p class="text-muted mb-4">
+            Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta.
+            Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado.
+        </p>
+        
+        <div class="d-grid gap-2 d-md-block mb-4">
+            <form method="POST" action="{{ url_for('auth.resend_verification') }}" class="d-inline">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Reenviar correo de verificación
+                </button>
+            </form>
+        </div>
+        
+        <p class="text-muted small">
+            ¿El correo electrónico es incorrecto?
+            <a href="{{ url_for('auth.change_email_request') }}" class="text-decoration-none">
+                Actualizar correo electrónico
+            </a>
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

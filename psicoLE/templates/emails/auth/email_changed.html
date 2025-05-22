@@ -1,0 +1,33 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+    <h1>Cambio de correo electrónico solicitado</h1>
+    <p>¡Hola, {{ user.username }}!</p>
+    <p>Hemos recibido una solicitud para cambiar el correo electrónico asociado a tu cuenta en {{ config.APP_NAME }} de <strong>{{ old_email }}</strong> a <strong>{{ new_email }}</strong>.</p>
+    
+    <p>Para confirmar este cambio, por favor haz clic en el siguiente enlace:</p>
+    
+    <p style="text-align: center; margin: 30px 0;">
+        <a href="{{ url_for('auth.verify_email', token=token, _external=True) }}" 
+           style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            Confirmar cambio de correo
+        </a>
+    </p>
+    
+    <p>Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:</p>
+    <p style="word-break: break-all; color: #666; font-size: 12px;">
+        {{ url_for('auth.verify_email', token=token, _external=True) }}
+    </p>
+    
+    <p>Este enlace expirará en {{ config.VERIFICATION_TOKEN_EXPIRE_HOURS }} horas.</p>
+    
+    <p>Si no solicitaste este cambio, por favor <strong>no hagas clic en el enlace</strong> y contacta a nuestro equipo de soporte de inmediato, ya que esto podría indicar un intento no autorizado de acceder a tu cuenta.</p>
+    
+    <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+    
+    <p>Saludos,<br>El equipo de {{ config.APP_NAME }}</p>
+    
+    <p style="font-size: 12px; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
+        Por seguridad, nunca compartas este correo ni el enlace con nadie. El equipo de {{ config.APP_NAME }} nunca te pedirá tu contraseña o información personal por correo electrónico.
+    </p>
+{% endblock %}

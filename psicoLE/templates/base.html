@@ -47,17 +47,6 @@
                         </ul>
                     </li>
                     {% endif %}
-                    {% if current_user.is_authenticated and current_user.role and current_user.role.name in ['admin', 'staff'] %}
-                    <li class="nav-item">
-                         <a class="nav-link" href="{{ url_for('admin_dashboard.list_pending_data_changes') }}">
-                            Admin Dashboard
-                            {% set pending_count = pending_data_changes_count() %}
-                            {% if pending_count > 0 %}
-                                <span class="badge bg-danger ms-1">{{ pending_count }}</span>
-                            {% endif %}
-                        </a>
-                    </li>
-                    {% endif %}
                     {# Add other navigation links here as needed #}
                 </ul>
                 <ul class="navbar-nav ms-auto">
@@ -71,17 +60,13 @@
                                 {% if current_user.role and current_user.role.name == 'professional' %}
                                     {% set user_professional = get_professional_by_user_id(current_user.id) %}
                                     {% if user_professional %}
-                                        <li><h6 class="dropdown-header">Autogestión (Self-Service)</h6></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('autogestion.autogestion_main_dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i> My Dashboard</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('autogestion.view_my_profile') }}"><i class="fas fa-id-card me-2"></i> My Profile & Requests</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('autogestion.manage_my_documents') }}"><i class="fas fa-folder-open me-2"></i> My Documents</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('autogestion.financial_dashboard') }}"><i class="fas fa-chart-line me-2"></i> My Finances (Detailed)</a></li>
-                                        <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('profesionales.detail_professional', professional_id=user_professional.id) }}">My Profile (Data)</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('autogestion.financial_dashboard') }}">My Finances (Autogestión)</a></li>
                                     {% endif %}
                                 {% endif %}
                                 <!-- Add other user-specific links like 'Settings' here -->
-                                <!-- Example: <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li> -->
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
                             </ul>
                         </li>
                     {% else %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([{'text': 'Panel del Profesional'}]) }}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3"><i class="fas fa-tachometer-alt me-2"></i>{{ title }}</h2>
+        <span class="text-muted">Bienvenido, {{ current_user.username }}!</span>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-0">Documentos Pendientes</h6>
+                            <h2 class="mb-0">{{ stats.documentos_pendientes }}</h2>
+                        </div>
+                        <div class="icon-shape bg-primary text-white rounded-3 p-3">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver Documentos</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-0">Pagos Pendientes</h6>
+                            <h2 class="mb-0">{{ stats.pagos_pendientes }}</h2>
+                        </div>
+                        <div class="icon-shape bg-warning text-white rounded-3 p-3">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="#" class="btn btn-sm btn-outline-warning">Ver Pagos</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-0">Ingresos Totales</h6>
+                            <h2 class="mb-0">${{ "%.2f"|format(stats.ingresos_totales) }}</h2>
+                        </div>
+                        <div class="icon-shape bg-success text-white rounded-3 p-3">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="#" class="btn btn-sm btn-outline-success">Ver Reportes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Documentos Recientes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Documentos Recientes</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if documentos_recientes %}
+                        <div class="list-group list-group-flush">
+                            {% for doc in documentos_recientes %}
+                                <div class="list-group-item border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ doc.tipo_documento|title }}</h6>
+                                            <p class="mb-0 small text-muted">
+                                                Subido el {{ doc.uploaded_at.strftime('%d/%m/%Y') }}
+                                                <span class="badge bg-{{ 'success' if doc.status == 'approved' else 'warning' if doc.status == 'pending_review' else 'danger' }} ms-2">
+                                                    {{ doc.status|replace('_', ' ')|title }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No hay documentos recientes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimos Pagos -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Últimos Pagos</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if pagos_recientes %}
+                        <div class="list-group list-group-flush">
+                            {% for pago in pagos_recientes %}
+                                <div class="list-group-item border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Pago #{{ pago.id }}</h6>
+                                            <p class="mb-0 small text-muted">
+                                                {{ pago.created_at.strftime('%d/%m/%Y') }}
+                                                <span class="badge bg-{{ 'success' if pago.status == 'completed' else 'warning' if pago.status == 'pending' else 'danger' }} ms-2">
+                                                    {{ pago.status|title }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold">${{ "%.2f"|format(pago.amount) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No hay pagos recientes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <a href="#" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-upload me-2"></i>Subir Documento
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="#" class="btn btn-outline-success w-100">
+                                <i class="fas fa-calendar-plus me-2"></i>Nueva Cita
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="#" class="btn btn-outline-info w-100">
+                                <i class="fas fa-user-edit me-2"></i>Editar Perfil
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="#" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-cog me-2"></i>Configuración
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

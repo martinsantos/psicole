@@ -1,23 +1,18 @@
 {% extends "base.html" %}
-{% from "_breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}{{ title }} - Periodo {{ cuota.periodo }} - PsicoLE{% endblock %}
 
 {% block content %}
-{{ render_breadcrumbs([
-    {'url': url_for('cobranzas.list_fees'), 'text': 'Fees Management'},
-    {'text': 'Fee Details: ' + cuota.periodo}
-]) }}
-<div class="container-fluid">
-    <div class="card shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h2 class="h4 mb-0"><i class="fas fa-file-alt me-2"></i>Fee Details: Periodo {{ cuota.periodo }}</h2>
-            <span class="badge bg-{{ 'success' if cuota.estado == 'paid' else 'warning' if cuota.estado in ['pending', 'partially_paid'] else 'danger' if cuota.estado == 'overdue' else 'secondary' }} fs-6 rounded-pill">{{ cuota.estado|title }}</span>
+<div class="container">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Fee Details: Periodo {{ cuota.periodo }}</h3>
+            <span class="badge bg-{{ 'success' if cuota.estado == 'paid' else 'warning' if cuota.estado in ['pending', 'partially_paid'] else 'danger' if cuota.estado == 'overdue' else 'secondary' }} fs-6">{{ cuota.estado|title }}</span>
         </div>
         <div class="card-body">
-            <div class="row mb-4">
+            <h4>Professional Information</h4>
+            <div class="row mb-3">
                 <div class="col-md-6">
-                    <h5><i class="fas fa-user-tie me-1"></i> Professional Information</h5>
                     <p><strong>Professional:</strong> 
                         {% if cuota.professional %}
                             <a href="{{ url_for('profesionales.detail_professional', professional_id=cuota.professional.id) }}">
