@@ -14,12 +14,13 @@ class Cuota(db.Model):
     fecha_emision = Column(Date, nullable=False, default=datetime.utcnow)
     fecha_vencimiento = Column(Date, nullable=False)
     estado = Column(String(20), nullable=False, default='pending') # pending, paid, partially_paid, overdue, cancelled
+    metodo_pago_preferido = Column(String(30), nullable=False, default='manual') # manual, debito_automatico
 
     # Relationships
     professional = relationship('Professional', back_populates='cuotas')
     pagos = relationship('Pago', back_populates='cuota', lazy='dynamic', cascade="all, delete-orphan")
 
-    def __init__(self, professional_id, periodo, monto_esperado, fecha_vencimiento, fecha_emision=None, estado='pending', monto_pagado=None):
+    def __init__(self, professional_id, periodo, monto_esperado, fecha_vencimiento, fecha_emision=None, estado='pending', monto_pagado=None, metodo_pago_preferido='manual'):
         self.professional_id = professional_id
         self.periodo = periodo
         self.monto_esperado = monto_esperado
@@ -29,6 +30,7 @@ class Cuota(db.Model):
         if monto_pagado is not None:
             self.monto_pagado = monto_pagado
         self.estado = estado
+        self.metodo_pago_preferido = metodo_pago_preferido
         
     def __repr__(self):
         return f'<Cuota {self.id} - {self.professional.first_name if self.professional else "N/A"} {self.periodo} - {self.estado}>'

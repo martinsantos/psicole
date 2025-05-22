@@ -31,6 +31,7 @@
                     <p><strong>Specialization:</strong> {{ professional.specialization or 'N/A' }}</p>
                     <p><strong>University:</strong> {{ professional.university or 'N/A' }}</p>
                     <p><strong>CBU for Payments:</strong> {{ professional.cbu or 'N/A' }}</p>
+                    <p><strong>Autoriza Débito Automático:</strong> <span class="badge bg-{{ 'success' if professional.autoriza_debito_automatico else 'danger' }}">{{ "Sí" if professional.autoriza_debito_automatico else "No" }}</span></p>
                     {% if professional.user %}
                     <p><strong>Linked User Account:</strong> {{ professional.user.username }}</p>
                     {% else %}
@@ -55,27 +56,45 @@
     {% if current_user.role.name in ['admin', 'staff'] and professional.documentos %}
     <div class="card shadow-sm">
         <div class="card-header bg-light">
-            <h4 class="h5 mb-0"><i class="fas fa-folder-open me-2"></i> Uploaded Documents</h4>
+            <h4 class="h5 mb-0"><i class="fas fa-folder-open me-2"></i>Documentos Adjuntos (Admin View)</h4>
         </div>
         <div class="card-body">
-            {% if professional.documentos|list|length > 0 %}
-            <ul class="list-group list-group-flush">
-                {% for doc in professional.documentos %}
-                <li class="list-group-item d-flex justify-content-between align-items-center ps-0 pe-0">
-                    <div>
-                        <i class="fas fa-file-alt me-2 text-muted"></i>
-                        <strong>{{ doc.nombre_documento }}</strong> ({{ doc.tipo_documento or 'General' }})
-                        <br>
-                        <small class="text-muted ms-4">Uploaded: {{ doc.fecha_carga.strftime('%Y-%m-%d %H:%M') }} - File: {{ doc.archivo_filename }}</small>
-                    </div>
-                    <a href="{{ url_for('admin_dashboard.download_professional_document_admin', document_id=doc.id) }}" class="btn btn-sm btn-success" title="Download Document">
-                        <i class="fas fa-download"></i> Download
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
+            {% if documents and documents|length > 0 %} {# Use 'documents' passed from view #}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre del Documento</th>
+                            <th>Tipo de Documento</th>
+                            <th>Fecha de Carga</th>
+                            <th>Archivo Original</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td>{{ doc.nombre_documento }}</td>
+                            <td>{{ doc.tipo_documento|title }}</td>
+                            <td>{{ doc.fecha_carga.strftime('%Y-%m-%d %H:%M') if doc.fecha_carga else 'N/A' }}</td>
+                            <td>{{ doc.nombre_archivo_original }}</td>
+                            <td>
+                                <a href="{{ url_for('profesionales.download_professional_document_admin', professional_id=professional.id, document_id=doc.id) }}" class="btn btn-sm btn-success" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <form action="{{ url_for('profesionales.delete_professional_document_admin', professional_id=professional.id, document_id=doc.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea eliminar este documento: {{ doc.nombre_archivo_original }}? Esta acción no se puede deshacer.');">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-            <p class="text-muted">No documents uploaded by this professional.</p>
+            <p class="text-muted">No hay documentos cargados para este profesional.</p>
             {% endif %}
         </div>
     </div>

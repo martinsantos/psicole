@@ -15,23 +15,38 @@
 
     <!-- Search and Filter Form -->
     <form method="GET" action="{{ url_for('profesionales.list_professionals') }}" class="mb-4 p-3 border rounded bg-light">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label for="search_term" class="form-label">Search by Name or Matrícula</label>
-                <input type="text" name="search" id="search_term" class="form-control" value="{{ search_term or '' }}">
-            </div>
+        {{ filter_form.hidden_tag() }} {# Include if CSRF is enabled for GET, though typically not #}
+        <div class="row g-3 align-items-start"> {# Changed align-items-end to align-items-start for better layout with more fields #}
             <div class="col-md-4">
-                <label for="status_filter" class="form-label">Status Matrícula</label>
-                <select name="status_matricula" id="status_filter" class="form-select">
-                    <option value="">All Statuses</option>
-                    {% for value, display in status_choices %}
-                        <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ display }}</option>
-                    {% endfor %}
-                </select>
+                {{ filter_form.search.label(class="form-label") }}
+                {{ filter_form.search(class="form-control form-control-sm", placeholder="Name or Matrícula") }}
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Search/Filter</button>
-                <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary w-100 mt-1"><i class="fas fa-eraser"></i> Clear</a>
+                {{ filter_form.status_matricula.label(class="form-label") }}
+                {{ filter_form.status_matricula(class="form-select form-select-sm") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.title.label(class="form-label") }}
+                {{ filter_form.title(class="form-control form-control-sm", placeholder="e.g., Licenciado") }}
+            </div>
+            <div class="col-md-2">
+                {# Empty column for spacing or future button, or adjust other column sizes #}
+            </div>
+        </div>
+        <div class="row g-3 align-items-start mt-2">
+            <div class="col-md-4">
+                {{ filter_form.specialization.label(class="form-label") }}
+                {{ filter_form.specialization(class="form-control form-control-sm", placeholder="e.g., Psicología Clínica") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.university.label(class="form-label") }}
+                {{ filter_form.university(class="form-control form-control-sm", placeholder="e.g., UBA") }}
+            </div>
+            <div class="col-md-3 align-self-end"> {# Align buttons to the bottom of their row space #}
+                <button type="submit" name="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-search"></i> Search/Filter</button>
+            </div>
+            <div class="col-md-2 align-self-end">
+                 <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary btn-sm w-100"><i class="fas fa-eraser"></i> Clear</a>
             </div>
         </div>
     </form>
@@ -79,8 +94,9 @@
     <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             {# Previous Page Link #}
+            {% set query_params = request.args.to_dict() %}
             {% if professionals.has_prev %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=professionals.prev_num, search=search_term, status_matricula=status_filter) }}"><i class="fas fa-chevron-left"></i> Previous</a></li>
+                <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=professionals.prev_num, **query_params) }}"><i class="fas fa-chevron-left"></i> Previous</a></li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span></li>
             {% endif %}
@@ -91,7 +107,7 @@
                     {% if professionals.page == page_num %}
                         <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
                     {% else %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=page_num, search=search_term, status_matricula=status_filter) }}">{{ page_num }}</a></li>
+                        <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=page_num, **query_params) }}">{{ page_num }}</a></li>
                     {% endif %}
                 {% else %}
                     <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
@@ -100,7 +116,7 @@
 
             {# Next Page Link #}
             {% if professionals.has_next %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=professionals.next_num, search=search_term, status_matricula=status_filter) }}">Next <i class="fas fa-chevron-right"></i></a></li>
+                <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=professionals.next_num, **query_params) }}">Next <i class="fas fa-chevron-right"></i></a></li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Next <i class="fas fa-chevron-right"></i></span></li>
             {% endif %}

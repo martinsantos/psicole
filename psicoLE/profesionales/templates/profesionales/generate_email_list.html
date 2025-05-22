@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('profesionales.list_professionals'), 'text': 'Professionals'},
+    {'text': 'Generate Email List'}
+]) }}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-envelope-open-text me-2"></i>{{ title }}</h2>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" action="{{ url_for('profesionales.generate_email_list') }}" class="mb-4 p-3 border rounded bg-light">
+        <div class="row g-3 align-items-start">
+            <div class="col-md-4">
+                {{ filter_form.search.label(class="form-label") }}
+                {{ filter_form.search(class="form-control form-control-sm", placeholder="Name or Matrícula") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.status_matricula.label(class="form-label") }}
+                {{ filter_form.status_matricula(class="form-select form-select-sm") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.title.label(class="form-label") }}
+                {{ filter_form.title(class="form-control form-control-sm", placeholder="e.g., Licenciado") }}
+            </div>
+        </div>
+        <div class="row g-3 align-items-start mt-2">
+            <div class="col-md-4">
+                {{ filter_form.specialization.label(class="form-label") }}
+                {{ filter_form.specialization(class="form-control form-control-sm", placeholder="e.g., Psicología Clínica") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.university.label(class="form-label") }}
+                {{ filter_form.university(class="form-control form-control-sm", placeholder="e.g., UBA") }}
+            </div>
+            <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-filter"></i> Apply Filters & Generate</button>
+            </div>
+            <div class="col-md-2 align-self-end">
+                 <a href="{{ url_for('profesionales.generate_email_list') }}" class="btn btn-secondary btn-sm w-100"><i class="fas fa-eraser"></i> Clear Filters</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Generated Email List Section -->
+    <div class="mt-4">
+        <h3>Generated Email List</h3>
+        {% if email_count > 0 %}
+            <p>Found <strong>{{ email_count }}</strong> email address(es) matching your criteria.</p>
+            <div class="mb-3">
+                <textarea class="form-control" rows="10" readonly>{{ email_list_str }}</textarea>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyEmailsToClipboard()">
+                <i class="fas fa-copy"></i> Copy to Clipboard
+            </button>
+        {% elif request.args %}  {# Only show "no emails found" if filters were applied #}
+            <div class="alert alert-info">No email addresses found matching your criteria. Try adjusting your filters.</div>
+        {% else %}
+             <div class="alert alert-secondary">Apply filters above to generate an email list.</div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyEmailsToClipboard() {
+    const textarea = document.querySelector('textarea');
+    textarea.select();
+    document.execCommand('copy');
+    // Optional: Show a temporary message or change button text
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => {
+        button.innerHTML = originalText;
+    }, 2000); // Revert after 2 seconds
+}
+</script>
+
+<!-- Font Awesome for icons (ensure it's loaded, typically in base.html) -->
+{% endblock %}

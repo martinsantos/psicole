@@ -46,7 +46,15 @@ def generate_monthly_fees(periodo_str, fecha_vencimiento_date, monto_general_dec
                 fecha_vencimiento=fecha_vencimiento_date,
                 fecha_emision=date.today(), # Or pass as arg if needed
                 estado='pending'
+                # metodo_pago_preferido will be set below
             )
+            
+            # Set metodo_pago_preferido based on professional's preference
+            if prof.autoriza_debito_automatico:
+                new_cuota.metodo_pago_preferido = 'debito_automatico'
+            else:
+                new_cuota.metodo_pago_preferido = 'manual'
+                
             db.session.add(new_cuota)
             success_count += 1
         except SQLAlchemyError as e:

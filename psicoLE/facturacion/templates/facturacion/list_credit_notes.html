@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+{% from "_pagination.html" import render_pagination %} {# Assuming you have a pagination macro #}
+
+{% block title %}{{ title }} - Facturación - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('facturacion.list_invoices'), 'text': 'Facturación'},
+    {'text': title}
+]) }}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-receipt me-2"></i>{{ title }}</h2>
+        {# Optional: Button to create standalone credit note if that's ever a feature #}
+        {# <a href="{{ url_for('facturacion.create_standalone_credit_note') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Crear Nota de Crédito Manual
+        </a> #}
+    </div>
+
+    {% if credit_notes.items %}
+    <div class="card shadow-sm">
+        <div class="card-body p-0"> {# Remove padding for table to fit edge-to-edge #}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Número NC</th>
+                            <th>Factura Original</th>
+                            <th>Cliente</th>
+                            <th>Fecha Emisión</th>
+                            <th>Monto Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nc in credit_notes.items %}
+                        <tr>
+                            <td><a href="{{ url_for('facturacion.detail_credit_note', credit_note_id=nc.id) }}">{{ nc.numero_nota_credito }}</a></td>
+                            <td><a href="{{ url_for('facturacion.detail_invoice', factura_id=nc.factura_original_id) }}">{{ nc.factura_original.numero_factura }}</a></td>
+                            <td>{{ nc.cliente_nombre }}</td>
+                            <td>{{ nc.fecha_emision.strftime('%d/%m/%Y') }}</td>
+                            <td>${{ nc.monto_total|round(2) }}</td>
+                            <td><span class="badge bg-{{ 'success' if nc.estado == 'emitida' else 'secondary' if nc.estado == 'anulada' else 'info' }}">{{ nc.estado|title }}</span></td>
+                            <td>
+                                <a href="{{ url_for('facturacion.detail_credit_note', credit_note_id=nc.id) }}" class="btn btn-xs btn-info" title="Ver Detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('facturacion.download_credit_note_pdf', credit_note_id=nc.id) }}" class="btn btn-xs btn-danger" title="Descargar PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {{ render_pagination(credit_notes, 'facturacion.list_credit_notes') }}
+    {% else %}
+    <div class="alert alert-info">No se encontraron notas de crédito.</div>
+    {% endif %}
+</div>
+{% endblock %}

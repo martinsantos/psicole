@@ -61,6 +61,20 @@
                         {{ render_field(form.university, placeholder="Name of University") }}
                         {{ render_field(form.cbu, placeholder="CBU for payments (22 digits)") }}
 
+                        <div class="row mb-3 mt-3"> {# Added mt-3 for spacing #}
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    {{ form.autoriza_debito_automatico(class="form-check-input") }}
+                                    {{ form.autoriza_debito_automatico.label(class="form-check-label") }}
+                                    {% if form.autoriza_debito_automatico.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.autoriza_debito_automatico.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
                     </fieldset>
                     <div class="form-group mt-4 text-end">
                         <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary me-2"><i class="fas fa-times me-1"></i> Cancel</a>

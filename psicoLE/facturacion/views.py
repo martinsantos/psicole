@@ -1,11 +1,13 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, make_response
 from psicoLE.database import db
-from .models import Factura
-from psicoLE.cobranzas.models import Pago # To fetch Pago
-from .forms import InvoiceForm
-from .services import generate_next_invoice_number
+from .models import Factura, NotaCredito, NotaDebito # Added NotaDebito
+from psicoLE.cobranzas.models import Pago 
+from .forms import InvoiceForm, NotaCreditoForm, NotaDebitoForm # Added NotaDebitoForm
+from .services import generate_next_invoice_number, generate_next_credit_note_number, generate_next_debit_note_number # Added DN number generation
+from .pdf import generate_invoice_pdf_weasyprint, generate_credit_note_pdf, generate_debit_note_pdf # Added DN PDF generation
 from psicoLE.auth.decorators import roles_required
 from decimal import Decimal
+from datetime import date as dt_date # For default dates if needed
 
 facturacion_bp = Blueprint('facturacion', __name__,
                            template_folder='templates/facturacion',
@@ -128,3 +130,178 @@ def download_invoice_pdf(factura_id):
         flash(f"Error generating PDF: {str(e)}", 'danger')
         # Log error e
         return redirect(url_for('facturacion.detail_invoice', factura_id=factura.id))
+
+
+# --- Credit Note Views ---
+
+@facturacion_bp.route('/invoice/<int:factura_id>/create-credit-note', methods=['GET', 'POST'])
+@roles_required('admin', 'staff')
+def create_credit_note(factura_id):
+    factura_original = Factura.query.get_or_404(factura_id)
+    form = NotaCreditoForm()
+    
+    if request.method == 'GET':
+        form.factura_original_id.data = factura_original.id
+        # Pre-fill monto_total with original invoice amount as a suggestion
+        form.monto_total.data = factura_original.monto_total
+
+    if form.validate_on_submit():
+        try:
+            numero_nc = generate_next_credit_note_number()
+            
+            nueva_nota_credito = NotaCredito(
+                factura_original_id=factura_original.id,
+                numero_nota_credito=numero_nc,
+                monto_total=form.monto_total.data,
+                motivo=form.motivo.data,
+                detalles_adicionales=form.detalles_adicionales.data,
+                fecha_emision=dt_date.today(), # Or allow form to set this
+                estado='emitida',
+                # Copy client and professional info from original invoice
+                professional_id=factura_original.professional_id,
+                cliente_nombre=factura_original.cliente_nombre,
+                cliente_identificacion=factura_original.cliente_identificacion
+            )
+            db.session.add(nueva_nota_credito)
+            
+            # Optionally, update original invoice status if fully credited
+            # For now, manual status update or further logic can handle this
+            # factura_original.estado = 'anulada_con_nc' 
+            # db.session.add(factura_original)
+
+            db.session.commit()
+            flash(f'Nota de Crédito {numero_nc} creada exitosamente para la Factura {factura_original.numero_factura}.', 'success')
+            return redirect(url_for('facturacion.detail_credit_note', credit_note_id=nueva_nota_credito.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear la Nota de Crédito: {str(e)}', 'danger')
+            # Log error e
+            
+    return render_template('create_credit_note.html', 
+                           form=form, 
+                           factura_original=factura_original, 
+                           title='Crear Nota de Crédito')
+
+@facturacion_bp.route('/credit-notes', methods=['GET'])
+@roles_required('admin', 'staff')
+def list_credit_notes():
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 10 # Placeholder, consider making this configurable
+    
+    query = NotaCredito.query.order_by(NotaCredito.fecha_emision.desc(), NotaCredito.numero_nota_credito.desc())
+    credit_notes_list = query.paginate(page=page, per_page=items_per_page)
+    
+    return render_template('list_credit_notes.html', 
+                           credit_notes=credit_notes_list, 
+                           title='Notas de Crédito')
+
+@facturacion_bp.route('/credit-note/<int:credit_note_id>')
+@roles_required('admin', 'staff')
+def detail_credit_note(credit_note_id):
+    credit_note = NotaCredito.query.get_or_404(credit_note_id)
+    return render_template('detail_credit_note.html', 
+                           credit_note=credit_note, 
+                           title='Detalle Nota de Crédito')
+
+@facturacion_bp.route('/credit-note/<int:credit_note_id>/pdf')
+@roles_required('admin', 'staff')
+def download_credit_note_pdf(credit_note_id):
+    credit_note = NotaCredito.query.get_or_404(credit_note_id)
+    try:
+        pdf_bytes = generate_credit_note_pdf(credit_note)
+        
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename="nota_credito_{credit_note.numero_nota_credito}.pdf"'
+        return response
+    except ImportError: 
+        flash("Librería de generación de PDF (WeasyPrint) no encontrada o configurada correctamente.", 'danger')
+        return redirect(url_for('facturacion.detail_credit_note', credit_note_id=credit_note.id))
+    except Exception as e:
+        flash(f"Error al generar PDF de Nota de Crédito: {str(e)}", 'danger')
+        # Log error e
+        return redirect(url_for('facturacion.detail_credit_note', credit_note_id=credit_note.id))
+
+
+# --- Debit Note Views ---
+
+@facturacion_bp.route('/invoice/<int:factura_id>/create-debit-note', methods=['GET', 'POST'])
+@roles_required('admin', 'staff')
+def create_debit_note(factura_id):
+    factura_original = Factura.query.get_or_404(factura_id)
+    form = NotaDebitoForm()
+    
+    if request.method == 'GET':
+        form.factura_original_id.data = factura_original.id
+        # Unlike credit notes, monto_total for debit notes is often not pre-filled from original invoice
+
+    if form.validate_on_submit():
+        try:
+            numero_nd = generate_next_debit_note_number()
+            
+            nueva_nota_debito = NotaDebito(
+                factura_original_id=factura_original.id,
+                numero_nota_debito=numero_nd,
+                monto_total=form.monto_total.data,
+                motivo=form.motivo.data,
+                detalles_adicionales=form.detalles_adicionales.data,
+                fecha_emision=dt_date.today(), # Or allow form to set this
+                estado='emitida',
+                # Copy client and professional info from original invoice
+                professional_id=factura_original.professional_id,
+                cliente_nombre=factura_original.cliente_nombre,
+                cliente_identificacion=factura_original.cliente_identificacion
+            )
+            db.session.add(nueva_nota_debito)
+            db.session.commit()
+            flash(f'Nota de Débito {numero_nd} creada exitosamente para la Factura {factura_original.numero_factura}.', 'success')
+            return redirect(url_for('facturacion.detail_debit_note', debit_note_id=nueva_nota_debito.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear la Nota de Débito: {str(e)}', 'danger')
+            # Log error e
+            
+    return render_template('create_debit_note.html', 
+                           form=form, 
+                           factura_original=factura_original, 
+                           title='Crear Nota de Débito')
+
+@facturacion_bp.route('/debit-notes', methods=['GET'])
+@roles_required('admin', 'staff')
+def list_debit_notes():
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 10 # Placeholder, consider making this configurable
+    
+    query = NotaDebito.query.order_by(NotaDebito.fecha_emision.desc(), NotaDebito.numero_nota_debito.desc())
+    debit_notes_list = query.paginate(page=page, per_page=items_per_page)
+    
+    return render_template('list_debit_notes.html', 
+                           debit_notes=debit_notes_list, 
+                           title='Notas de Débito')
+
+@facturacion_bp.route('/debit-note/<int:debit_note_id>')
+@roles_required('admin', 'staff')
+def detail_debit_note(debit_note_id):
+    debit_note = NotaDebito.query.get_or_404(debit_note_id)
+    return render_template('detail_debit_note.html', 
+                           debit_note=debit_note, 
+                           title='Detalle Nota de Débito')
+
+@facturacion_bp.route('/debit-note/<int:debit_note_id>/pdf')
+@roles_required('admin', 'staff')
+def download_debit_note_pdf(debit_note_id):
+    debit_note = NotaDebito.query.get_or_404(debit_note_id)
+    try:
+        pdf_bytes = generate_debit_note_pdf(debit_note)
+        
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename="nota_debito_{debit_note.numero_nota_debito}.pdf"'
+        return response
+    except ImportError: 
+        flash("Librería de generación de PDF (WeasyPrint) no encontrada o configurada correctamente.", 'danger')
+        return redirect(url_for('facturacion.detail_debit_note', debit_note_id=debit_note.id))
+    except Exception as e:
+        flash(f"Error al generar PDF de Nota de Débito: {str(e)}", 'danger')
+        # Log error e
+        return redirect(url_for('facturacion.detail_debit_note', debit_note_id=debit_note.id))

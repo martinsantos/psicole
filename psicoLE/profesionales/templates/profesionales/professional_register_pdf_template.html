@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Padrón de Profesionales</title>
+    <style>
+        /* Styles will be injected by WeasyPrint function for better control, 
+           but some basic structure can be defined here if preferred. */
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        .meta-info { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Padrón de Profesionales</h1>
+    <div class="meta-info">
+        <p><strong>Fecha de Generación:</strong> {{ current_date }}</p>
+        <p><strong>Filtros Aplicados:</strong> {{ filter_summary }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Matrícula</th>
+                <th>Nombre Completo</th>
+                <th>Título</th>
+                <th>Especialización</th>
+                <th>Estado Matrícula</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if professionals %}
+                {% for prof in professionals %}
+                <tr>
+                    <td>{{ prof.matricula }}</td>
+                    <td>{{ prof.last_name }}, {{ prof.first_name }}</td>
+                    <td>{{ prof.title or 'N/A' }}</td>
+                    <td>{{ prof.specialization or 'N/A' }}</td>
+                    <td>{{ prof.status_matricula|title }}</td>
+                    <td>{{ prof.email }}</td>
+                    <td>{{ prof.phone_number or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No se encontraron profesionales con los filtros aplicados.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</body>
+</html>

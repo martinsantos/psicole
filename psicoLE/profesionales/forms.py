@@ -24,6 +24,7 @@ class ProfessionalForm(FlaskForm):
     specialization = StringField('Specialization (e.g., Psicología Clínica)', validators=[Optional(), Length(max=100)])
     university = StringField('University', validators=[Optional(), Length(max=100)])
     cbu = StringField('CBU (Bank Account for Payments)', validators=[Optional(), Length(max=50)])
+    autoriza_debito_automatico = BooleanField('Autoriza Débito Automático en CBU informado?')
     
     submit = SubmitField('Save Professional')
 
@@ -58,3 +59,35 @@ class ProfessionalForm(FlaskForm):
         
         if professional.first():
             raise ValidationError('That email is already in use by another professional.')
+
+
+class ProfessionalFilterForm(FlaskForm):
+    search = StringField('Search by Name or Matrícula', validators=[Optional(), Length(max=100)])
+    status_matricula = SelectField('Status Matrícula', 
+                                   choices=[
+                                       ('', 'All Statuses'), # Add an option for 'All'
+                                       ('active', 'Active'), 
+                                       ('inactive', 'Inactive'), 
+                                       ('pending', 'Pending Review'),
+                                       ('suspended', 'Suspended')
+                                   ], 
+                                   validators=[Optional()])
+    specialization = StringField('Specialization', validators=[Optional(), Length(max=100)])
+    university = StringField('University', validators=[Optional(), Length(max=100)])
+    title = StringField('Title', validators=[Optional(), Length(max=100)])
+    submit = SubmitField('Search/Filter')
+    # clear = SubmitField('Clear Filters') # Optional: For a dedicated clear button - can be handled by a simple link
+
+
+class SpecializationReportFilterForm(FlaskForm):
+    status_matricula = SelectField('Status Matrícula', 
+                                   choices=[ # Re-define choices or import if they are globally defined
+                                       ('active', 'Active'), 
+                                       ('inactive', 'Inactive'), 
+                                       ('pending', 'Pending Review'),
+                                       ('suspended', 'Suspended'),
+                                       ('', 'All Statuses') # Allow selecting all
+                                   ],
+                                   default='active', # Default to 'active'
+                                   validators=[Optional()]) # Optional, as we default
+    submit = SubmitField('Generate Report')
