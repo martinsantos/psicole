@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% from "_form_macros.html" import render_field %}
+<<<<<<< HEAD
 {% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} for Fee {{ cuota.periodo }} - Cobranzas - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 {{ render_breadcrumbs([
     {'url': url_for('cobranzas.list_fees'), 'text': 'Fees Management'},
     {'url': url_for('cobranzas.detail_fee', cuota_id=cuota.id), 'text': 'Fee Details: ' + cuota.periodo},
@@ -59,6 +63,53 @@
                 </form>
             </div>
         </div>
+=======
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ title }}</h2>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Fee Information</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Professional:</strong> {{ cuota.professional.first_name }} {{ cuota.professional.last_name }} (Matrícula: {{ cuota.professional.matricula }})</p>
+                <p><strong>Periodo:</strong> {{ cuota.periodo }}</p>
+                <p><strong>Monto Esperado:</strong> ${{ "%.2f"|format(cuota.monto_esperado) }}</p>
+                <p><strong>Monto Pagado Actualmente:</strong> ${{ "%.2f"|format(cuota.monto_pagado) }}</p>
+                <p><strong>Balance Pendiente:</strong> ${{ "%.2f"|format(cuota.monto_esperado - cuota.monto_pagado) }}</p>
+                <p><strong>Estado Actual:</strong> <span class="badge bg-{{ 'success' if cuota.estado == 'paid' else 'warning' if cuota.estado in ['pending', 'partially_paid'] else 'danger' if cuota.estado == 'overdue' else 'secondary' }}">{{ cuota.estado|title }}</span></p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('cobranzas.record_payment_for_cuota', cuota_id=cuota.id) }}">
+            {{ form.hidden_tag() }} {# Includes cuota_id if set in form #}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Payment Details</legend>
+
+                {# Professional field might be hidden or displayed as text since it's derived from cuota #}
+                {# If form.professional_id is rendered, it should be disabled or readonly #}
+                {# For now, we assume form constructor handles pre-selection and it's not meant to be changed here #}
+                {# {{ render_field(form.professional_id, class="form-select", readonly=True) }} #}
+
+
+                {{ render_field(form.monto_pagado, class="form-control") }}
+                {{ render_field(form.fecha_pago, class="form-control", type="date") }}
+                {{ render_field(form.metodo_pago, class="form-select") }}
+                {{ render_field(form.referencia_pago, class="form-control") }}
+                
+                <div class="form-group form-check mb-3">
+                    {{ form.confirmado(class="form-check-input") }}
+                    {{ form.confirmado.label(class="form-check-label") }}
+                </div>
+
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('cobranzas.detail_fee', cuota_id=cuota.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     </div>
 </div>
 {% endblock %}

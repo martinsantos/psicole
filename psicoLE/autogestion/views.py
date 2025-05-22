@@ -38,6 +38,7 @@ def financial_dashboard():
                            payments=payments,
                            invoices=invoices,
                            title='My Financial Dashboard')
+<<<<<<< HEAD
 
 @autogestion_bp.route('/profile')
 @roles_required('professional')
@@ -295,3 +296,5 @@ def delete_my_document(document_id):
         # Log error e
         
     return redirect(url_for('autogestion.manage_my_documents'))
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2

@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% from "_form_macros.html" import render_field %}
+<<<<<<< HEAD
 {% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - Configuraciones - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 {% set breadcrumb_items = [{'url': url_for('configuraciones.list_configurations'), 'text': 'System Configurations'}] %}
 {% if config_id %}
     {% set _ = breadcrumb_items.append({'text': 'Edit: ' + form.key.data}) %}
@@ -36,6 +40,27 @@
                 </form>
             </div>
         </div>
+=======
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ legend }}</h2>
+        <form method="POST" action=""> {# Action URL will be set by the view #}
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{ legend }}</legend>
+                
+                {# For key, pass readonly attribute if set in form field's render_kw #}
+                {{ render_field(form.key, class="form-control", readonly=form.key.render_kw.get('readonly', false)) }}
+                {{ render_field(form.value, class="form-control") }}
+                {{ render_field(form.description, class="form-control", rows=form.description.render_kw.get('rows', 3)) }}
+
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('configuraciones.list_configurations') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     </div>
 </div>
 {% endblock %}

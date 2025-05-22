@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from flask import request, current_app
 from flask_wtf import FlaskForm
 from flask_babel import _, lazy_gettext as _l
@@ -60,15 +61,37 @@ class RegistrationForm(FlaskForm):
     accept_tos = BooleanField(_l('Acepto los Términos de Servicio'), 
                              validators=[DataRequired(_('Debes aceptar los términos de servicio'))])
     submit = SubmitField(_l('Registrarse'))
+=======
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from .models import User
+
+class RegistrationForm(FlaskForm):
+    username = StringField('Username', 
+                           validators=[DataRequired(), Length(min=4, max=25)])
+    email = StringField('Email', 
+                        validators=[DataRequired(), Email()])
+    password = PasswordField('Password', 
+                             validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm Password', 
+                                     validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Sign Up')
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
         if user:
+<<<<<<< HEAD
             raise ValidationError(_('Este nombre de usuario ya está en uso. Por favor, elige otro.'))
+=======
+            raise ValidationError('That username is taken. Please choose a different one.')
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         if user:
+<<<<<<< HEAD
             raise ValidationError(_('Este correo electrónico ya está registrado. Por favor, utiliza otro o inicia sesión.'))
 
 class LoginForm(FlaskForm):
@@ -440,3 +463,13 @@ class DeviceAuthorizationForm(FlaskForm):
                              })
     remember_device = BooleanField(_l('Recordar este dispositivo'), default=False)
     submit = SubmitField(_l('Autorizar dispositivo'))
+=======
+            raise ValidationError('That email is already registered. Please choose a different one.')
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', 
+                           validators=[DataRequired(), Length(min=4, max=25)])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember = BooleanField('Remember Me')
+    submit = SubmitField('Login')
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2

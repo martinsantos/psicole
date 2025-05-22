@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from flask import render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import current_user, login_required
 from datetime import datetime
@@ -49,6 +50,18 @@ def dashboard():
                          stats=stats,
                          documentos_recientes=documentos_recientes,
                          pagos_recientes=pagos_recientes)
+=======
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask_login import current_user
+from psicoLE.database import db
+from .models import Professional
+from .forms import ProfessionalForm
+from psicoLE.auth.decorators import roles_required # Assuming decorators.py is in auth module
+
+profesionales_bp = Blueprint('profesionales', __name__, 
+                             template_folder='templates/profesionales',
+                             url_prefix='/profesionales') # Added url_prefix here
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 @profesionales_bp.route('/create', methods=['GET', 'POST'])
 @roles_required('admin', 'staff')

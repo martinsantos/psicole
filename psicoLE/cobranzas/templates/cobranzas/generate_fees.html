@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% from "_form_macros.html" import render_field %}
+<<<<<<< HEAD
 {% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - Cobranzas - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 {{ render_breadcrumbs([
     {'url': url_for('cobranzas.list_fees'), 'text': 'Fees Management'},
     {'text': 'Generate Monthly Fees'}
@@ -37,6 +41,29 @@
                 </form>
             </div>
         </div>
+=======
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ title }}</h2>
+        <p>This tool will generate monthly fees (cuotas) for all <strong>active</strong> professionals for the specified period.</p>
+        <p>If a fee already exists for a professional for that period, it will be skipped.</p>
+        
+        <form method="POST" action="{{ url_for('cobranzas.generate_fees_view') }}">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Fee Generation Parameters</legend>
+                
+                {{ render_field(form.periodo, class="form-control", placeholder="YYYY-MM") }}
+                {{ render_field(form.fecha_vencimiento, class="form-control", type="date") }}
+                {{ render_field(form.monto_general, class="form-control") }}
+
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('cobranzas.list_fees') }}" class="btn btn-secondary">Cancel & View Fees</a>
+            </div>
+        </form>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     </div>
 </div>
 {% endblock %}

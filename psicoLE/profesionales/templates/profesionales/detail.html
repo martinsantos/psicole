@@ -1,9 +1,13 @@
 {% extends "base.html" %}
+<<<<<<< HEAD
 {% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - {{ professional.first_name }} {{ professional.last_name }} - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 {{ render_breadcrumbs([{'url': url_for('profesionales.list_professionals'), 'text': 'Professionals'}, {'text': professional.first_name + ' ' + professional.last_name}]) }}
 <div class="container-fluid">
     <div class="card shadow-sm mb-4">
@@ -11,10 +15,19 @@
             <h2 class="h4 mb-0"><i class="fas fa-user-tie me-2"></i>{{ professional.first_name }} {{ professional.last_name }}</h2>
             {% if professional.title %}
                 <small class="text-muted">{{ professional.title }}</small>
+=======
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h3>{{ professional.first_name }} {{ professional.last_name }}</h3>
+            {% if professional.title %}
+                <h5 class="text-muted">{{ professional.title }}</h5>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
             {% endif %}
         </div>
         <div class="card-body">
             <div class="row">
+<<<<<<< HEAD
                 <div class="col-md-6 mb-3">
                     <h5 class="mb-3">Contact & License Information</h5>
                     <p><strong>Matrícula:</strong> {{ professional.matricula }}</p>
@@ -28,17 +41,35 @@
                 <div class="col-md-6 mb-3">
                     <h5 class="mb-3">Additional Information</h5>
                     <p><strong>Address:</strong><br>{{ professional.address|nl2br or 'N/A' }}</p>
+=======
+                <div class="col-md-6">
+                    <p><strong>Matrícula:</strong> {{ professional.matricula }}</p>
+                    <p><strong>Status Matrícula:</strong> <span class="badge bg-{{ 'success' if professional.status_matricula == 'active' else 'warning' if professional.status_matricula == 'pending' else 'danger' }}">{{ professional.status_matricula|title }}</span></p>
+                    {% if professional.vigencia_matricula %}
+                    <p><strong>Vigencia Matrícula:</strong> {{ professional.vigencia_matricula.strftime('%d-%m-%Y') if professional.vigencia_matricula else 'N/A' }}</p>
+                    {% endif %}
+                    <p><strong>Email:</strong> {{ professional.email }}</p>
+                    <p><strong>Phone Number:</strong> {{ professional.phone_number or 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Address:</strong> {{ professional.address or 'N/A' }}</p>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                     <p><strong>Specialization:</strong> {{ professional.specialization or 'N/A' }}</p>
                     <p><strong>University:</strong> {{ professional.university or 'N/A' }}</p>
                     <p><strong>CBU for Payments:</strong> {{ professional.cbu or 'N/A' }}</p>
                     {% if professional.user %}
                     <p><strong>Linked User Account:</strong> {{ professional.user.username }}</p>
                     {% else %}
+<<<<<<< HEAD
                     <p><strong>Linked User Account:</strong> <span class="text-muted">Not linked</span></p>
+=======
+                    <p><strong>Linked User Account:</strong> Not linked</p>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                     {% endif %}
                 </div>
             </div>
         </div>
+<<<<<<< HEAD
         <div class="card-footer text-end">
             <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to List</a>
             {% if current_user.is_authenticated and current_user.professional and current_user.professional.id == professional.id %}
@@ -47,10 +78,22 @@
             {% if current_user.role.name in ['admin', 'staff'] or (current_user.role.name == 'professional' and professional.user_id == current_user.id) %}
                 {% if current_user.role.name in ['admin', 'staff'] or (professional.user_id == current_user.id) %}
                     <a href="{{ url_for('profesionales.edit_professional', professional_id=professional.id) }}" class="btn btn-warning"><i class="fas fa-edit me-1"></i> Edit Profile Data</a>
+=======
+        <div class="card-footer">
+            <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary">Back to List</a>
+            {% if current_user.is_authenticated and current_user.professional and current_user.professional.id == professional.id %}
+                 <a href="{{ url_for('autogestion.financial_dashboard') }}" class="btn btn-info">View My Financials</a>
+            {% endif %}
+            {% if current_user.role.name in ['admin', 'staff'] or (current_user.role.name == 'professional' and professional.user_id == current_user.id) %}
+                {# Professionals can edit their own profile if linked #}
+                {% if current_user.role.name in ['admin', 'staff'] or (professional.user_id == current_user.id) %}
+                    <a href="{{ url_for('profesionales.edit_professional', professional_id=professional.id) }}" class="btn btn-warning">Edit Profile Data</a>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 {% endif %}
             {% endif %}
         </div>
     </div>
+<<<<<<< HEAD
 
     {% if current_user.role.name in ['admin', 'staff'] and professional.documentos %}
     <div class="card shadow-sm">
@@ -80,5 +123,7 @@
         </div>
     </div>
     {% endif %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 </div>
 {% endblock %}

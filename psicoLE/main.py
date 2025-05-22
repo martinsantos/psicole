@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 import sys
 from flask import Flask, session, render_template
@@ -140,6 +141,69 @@ def allowed_file(filename):
 @app.context_processor
 def utility_processor():
     return dict(allowed_file=allowed_file)
+=======
+from flask import Flask, session # Added session
+from psicoLE.database import db # Import the shared db instance
+from flask_login import LoginManager # Added LoginManager
+
+# Import models to ensure they are registered with SQLAlchemy's metadata
+from psicoLE.auth.models import User, Role
+from psicoLE.profesionales.models import Professional
+from psicoLE.configuraciones.models import Configuration
+from psicoLE.cobranzas.models import Cuota, Pago
+from psicoLE.facturacion.models import Factura # Import Factura
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///psicole.db' # Using SQLite for simplicity
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'your_secret_key' # Added a secret key for session management, etc.
+
+# Initialize SQLAlchemy with the app using the shared db instance
+db.init_app(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login' # The login route (using blueprint name 'auth')
+login_manager.login_message_category = 'info'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Register Blueprints
+from psicoLE.auth.views import auth_bp 
+app.register_blueprint(auth_bp, url_prefix='/auth')
+
+from psicoLE.profesionales.views import profesionales_bp
+app.register_blueprint(profesionales_bp, url_prefix='/profesionales')
+
+from psicoLE.configuraciones.views import configuraciones_bp
+app.register_blueprint(configuraciones_bp, url_prefix='/configuraciones')
+
+from psicoLE.cobranzas.views import cobranzas_bp
+app.register_blueprint(cobranzas_bp, url_prefix='/cobranzas')
+
+from psicoLE.facturacion.views import facturacion_bp
+app.register_blueprint(facturacion_bp, url_prefix='/facturacion')
+
+from psicoLE.reports.views import reports_bp
+app.register_blueprint(reports_bp, url_prefix='/reports')
+
+from psicoLE.autogestion.views import autogestion_bp
+app.register_blueprint(autogestion_bp, url_prefix='/autogestion')
+
+
+@app.route('/')
+def hello_world():
+    # Using current_user from Flask-Login
+    if current_user.is_authenticated:
+        user_info = f"{current_user.username} (Role: {current_user.role.name if current_user.role else 'N/A'})"
+    else:
+        user_info = "Guest"
+    
+    return f'Hello, PsicoLE! You are logged in as: {user_info}. Database setup is correct.'
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 @app.context_processor
 def inject_utility_functions():
@@ -147,6 +211,7 @@ def inject_utility_functions():
         if user_id is None:
             return None
         return Professional.query.filter_by(user_id=user_id).first()
+<<<<<<< HEAD
     
     # Context processor for pending data changes count
     # Moved here as it needs to be registered with the app
@@ -160,6 +225,9 @@ def inject_utility_functions():
         get_professional_by_user_id=get_professional_by_user_id_fn,
         pending_data_changes_count=pending_data_changes_count_fn
     )
+=======
+    return dict(get_professional_by_user_id=get_professional_by_user_id_fn)
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 def initialize_default_configurations():
     from psicoLE.configuraciones.utils import set_config_value, get_config_value
@@ -183,11 +251,14 @@ def initialize_default_configurations():
                                  # Let's ensure it's robust.
     
     # Ensure Mercado Pago configurations exist
+<<<<<<< HEAD
     def ensure_config_exists(key, default_value, description):
         from psicoLE.configuraciones.utils import get_config_value, set_config_value
         if get_config_value(key) is None:
             set_config_value(key, default_value, description)
             print(f"Configuration '{key}' set to '{default_value}'")
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     ensure_config_exists('mercadopago_access_token', 'YOUR_SANDBOX_ACCESS_TOKEN', 'Mercado Pago Sandbox Access Token.')
     ensure_config_exists('mercadopago_public_key', 'YOUR_SANDBOX_PUBLIC_KEY', 'Mercado Pago Sandbox Public Key.')
     print("Mercado Pago configurations checked/initialized.")
@@ -231,6 +302,7 @@ if __name__ == '__main__':
         # You could explicitly initialize it here too if preferred:
         # get_mp_sdk() 
 
+<<<<<<< HEAD
     # Error Handlers
     @app.errorhandler(403)
     def forbidden_error(error):
@@ -245,4 +317,6 @@ if __name__ == '__main__':
         db.session.rollback() # Rollback session in case of DB error leading to 500
         return render_template('errors/500.html'), 500
     
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     app.run(debug=True, host='0.0.0.0', port=5001)

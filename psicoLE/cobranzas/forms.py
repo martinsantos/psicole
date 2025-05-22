@@ -1,6 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, DecimalField, DateField, SelectField, HiddenField, BooleanField
+<<<<<<< HEAD
 from wtforms.validators import DataRequired, Optional, Regexp, ValidationError, NumberRange, Length
+=======
+from wtforms.validators import DataRequired, Optional, Regexp, ValidationError, NumberRange
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 from wtforms_sqlalchemy.fields import QuerySelectField
 from psicoLE.profesionales.models import Professional
 from psicoLE.configuraciones.utils import get_config_value

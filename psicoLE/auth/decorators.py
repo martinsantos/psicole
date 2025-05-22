@@ -1,4 +1,5 @@
 from functools import wraps
+<<<<<<< HEAD
 from datetime import datetime, timedelta
 import functools
 
@@ -25,6 +26,10 @@ def anonymous_required(f):
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
+=======
+from flask import flash, redirect, url_for, request # Added request
+from flask_login import current_user
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 def roles_required(*role_names):
     """
@@ -52,6 +57,7 @@ def roles_required(*role_names):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+<<<<<<< HEAD
 
 
 def password_required(f):
@@ -318,3 +324,5 @@ def prevent_concurrent_logins(f):
         
         return f(*args, **kwargs)
     return decorated_function
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
