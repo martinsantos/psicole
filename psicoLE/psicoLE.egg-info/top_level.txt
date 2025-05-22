@@ -1,0 +1,9 @@
+admin_dashboard
+auth
+autogestion
+cobranzas
+configuraciones
+facturacion
+main
+profesionales
+reports

@@ -1,37 +1,135 @@
-from flask import Flask, session # Added session
-from psicoLE.database import db # Import the shared db instance
-from flask_login import LoginManager # Added LoginManager
+import os
+import sys
+from flask import Flask, session, render_template
+from flask_login import LoginManager, current_user
+from flask_mail import Mail
+from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
 
-# Import models to ensure they are registered with SQLAlchemy's metadata
-from psicoLE.auth.models import User, Role
-from psicoLE.profesionales.models import Professional
-from psicoLE.configuraciones.models import Configuration
-from psicoLE.cobranzas.models import Cuota, Pago
-from psicoLE.facturacion.models import Factura
-from psicoLE.autogestion.models import DataChangeRequest, DocumentoProfesional 
-import os # For UPLOAD_FOLDER
+# Initialize extensions
+db = SQLAlchemy()
+mail = Mail()
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.login_message_category = 'info'
 
-app = Flask(__name__, instance_relative_config=True) # instance_relative_config=True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///psicole.db' 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key' 
+def create_app(config=None):
+    """Application factory function"""
+    # Create the Flask application
+    app = Flask(__name__, instance_relative_config=True)
+    
+    # Load default configuration
+    app.config.from_mapping(
+        SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///instance/psicole.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-key-123'),
+        # Email configuration
+        MAIL_SERVER=os.environ.get('MAIL_SERVER', 'smtp.gmail.com'),
+        MAIL_PORT=int(os.environ.get('MAIL_PORT', 587)),
+        MAIL_USE_TLS=os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true',
+        MAIL_USERNAME=os.environ.get('MAIL_USERNAME', ''),
+        MAIL_PASSWORD=os.environ.get('MAIL_PASSWORD', ''),
+        MAIL_DEFAULT_SENDER=os.environ.get('MAIL_DEFAULT_SENDER', '')
+    )
+    
+    # Override with any custom config passed in
+    if config is not None:
+        app.config.update(config)
+    
+    # Ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError as e:
+        print(f"Error creating instance folder: {e}")
+    
+    # Initialize extensions with app
+    db.init_app(app)
+    mail.init_app(app)
+    login_manager.init_app(app)
+    
+    # Register blueprints
+    from auth.views import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    
+    # Import and register main blueprint
+    try:
+        from main import main_bp
+        app.register_blueprint(main_bp)
+    except ImportError as e:
+        print(f"Warning: Could not import main blueprint: {e}")
+    
+    # Register other blueprints
+    register_blueprints(app)
+    
+    # Configure database
+    with app.app_context():
+        db.create_all()
+    
+    # User loader function
+    from auth.models import User
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+    
+    # Add test routes in development
+    if app.config.get('FLASK_ENV') == 'development':
+        from main.test_routes import test_bp
+        app.register_blueprint(test_bp, url_prefix='/test')
+    
+    # Simple route for testing
+    @app.route('/')
+    def index():
+        return '¡Bienvenido a PsicoLE! <a href="/auth/login">Iniciar sesión</a>'
+    
+    return app
+
+def register_blueprints(app):
+    """Register all blueprints"""
+    blueprints = [
+        ('profesionales.views', 'profesionales_bp', '/profesionales'),
+        ('cobranzas.views', 'cobranzas_bp', '/cobranzas'),
+        ('facturacion.views', 'facturacion_bp', '/facturacion'),
+        ('configuraciones.views', 'configuraciones_bp', '/configuraciones'),
+        ('autogestion.views', 'autogestion_bp', '/autogestion'),
+        ('admin_dashboard.views', 'admin_dashboard_bp', '/admin'),
+        ('reports.views', 'reports_bp', '/reports')
+    ]
+    
+    for module_path, bp_name, url_prefix in blueprints:
+        try:
+            module = __import__(module_path, fromlist=[bp_name])
+            bp = getattr(module, bp_name, None)
+            if bp and hasattr(bp, 'url_prefix'):
+                app.register_blueprint(bp)
+            else:
+                app.register_blueprint(bp, url_prefix=url_prefix)
+        except ImportError as e:
+            print(f"Warning: Could not import {bp_name} from {module_path}: {e}")
+
+# Load environment variables
+load_dotenv()
+
+# Create app instance
+app = create_app()
 
 # File Upload Configuration
-UPLOAD_FOLDER_NAME = 'professional_documents'
-# app.instance_path will point to the 'instance' folder at the root of your project
-app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads', UPLOAD_FOLDER_NAME)
+def get_upload_folder():
+    """Get the upload folder path"""
+    upload_folder_name = 'professional_documents'
+    upload_folder = os.path.join(app.instance_path, 'uploads', upload_folder_name)
+    
+    # Ensure the upload folder exists
+    try:
+        os.makedirs(upload_folder, exist_ok=True)
+    except OSError as e:
+        print(f"Error creating upload folder: {e}")
+    
+    return upload_folder
+
+# Configure upload folder in app config
+app.config['UPLOAD_FOLDER'] = get_upload_folder()
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'}
-
-# Ensure instance folder and upload folder exist
-try:
-    os.makedirs(app.instance_path, exist_ok=True)
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-except OSError as e:
-    print(f"Error creating instance/upload folders: {e}")
-
-
-# Initialize SQLAlchemy with the app using the shared db instance
-db.init_app(app)
 
 # Utility function for file uploads
 def allowed_file(filename):
@@ -42,52 +140,6 @@ def allowed_file(filename):
 @app.context_processor
 def utility_processor():
     return dict(allowed_file=allowed_file)
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'auth.login' # The login route (using blueprint name 'auth')
-login_manager.login_message_category = 'info'
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# Register Blueprints
-from psicoLE.auth.views import auth_bp 
-app.register_blueprint(auth_bp, url_prefix='/auth')
-
-from psicoLE.profesionales.views import profesionales_bp
-app.register_blueprint(profesionales_bp, url_prefix='/profesionales')
-
-from psicoLE.configuraciones.views import configuraciones_bp
-app.register_blueprint(configuraciones_bp, url_prefix='/configuraciones')
-
-from psicoLE.cobranzas.views import cobranzas_bp
-app.register_blueprint(cobranzas_bp, url_prefix='/cobranzas')
-
-from psicoLE.facturacion.views import facturacion_bp
-app.register_blueprint(facturacion_bp, url_prefix='/facturacion')
-
-from psicoLE.reports.views import reports_bp
-app.register_blueprint(reports_bp, url_prefix='/reports')
-
-from psicoLE.autogestion.views import autogestion_bp
-app.register_blueprint(autogestion_bp, url_prefix='/autogestion')
-
-from psicoLE.admin_dashboard.views import admin_dashboard_bp
-app.register_blueprint(admin_dashboard_bp, url_prefix='/admin') # Using /admin prefix
-
-
-@app.route('/')
-def hello_world():
-    # Using current_user from Flask-Login
-    if current_user.is_authenticated:
-        user_info = f"{current_user.username} (Role: {current_user.role.name if current_user.role else 'N/A'})"
-    else:
-        user_info = "Guest"
-    
-    return f'Hello, PsicoLE! You are logged in as: {user_info}. Database setup is correct.'
 
 @app.context_processor
 def inject_utility_functions():
@@ -131,6 +183,11 @@ def initialize_default_configurations():
                                  # Let's ensure it's robust.
     
     # Ensure Mercado Pago configurations exist
+    def ensure_config_exists(key, default_value, description):
+        from psicoLE.configuraciones.utils import get_config_value, set_config_value
+        if get_config_value(key) is None:
+            set_config_value(key, default_value, description)
+            print(f"Configuration '{key}' set to '{default_value}'")
     ensure_config_exists('mercadopago_access_token', 'YOUR_SANDBOX_ACCESS_TOKEN', 'Mercado Pago Sandbox Access Token.')
     ensure_config_exists('mercadopago_public_key', 'YOUR_SANDBOX_PUBLIC_KEY', 'Mercado Pago Sandbox Public Key.')
     print("Mercado Pago configurations checked/initialized.")
@@ -185,7 +242,7 @@ if __name__ == '__main__':
 
     @app.errorhandler(500)
     def internal_error(error):
-        # db.session.rollback() # Optional: Rollback session in case of DB error leading to 500
+        db.session.rollback() # Rollback session in case of DB error leading to 500
         return render_template('errors/500.html'), 500
     
     app.run(debug=True, host='0.0.0.0', port=5001)

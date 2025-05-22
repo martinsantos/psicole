@@ -1,4 +1,4 @@
-from psicoLE.database import db # Corrected import
+from app import db
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
 # Ensure User model is imported if it's referenced by Professional model for relationships
@@ -23,23 +23,11 @@ class Professional(db.Model):
     university = Column(String(100))
     cbu = Column(String(50)) # Bank account for payments
 
-    # The relationship should be defined referencing the class name `User` if it's imported,
-    # or the table name 'users' as a string if not.
-    # Assuming User class will be available in the SQLAlchemy metadata context.
+    # Relationship with User model
     user = relationship('User', backref=db.backref('professional', uselist=False))
-
-    # Back-references for Cobranzas
-    cuotas = relationship('Cuota', back_populates='professional', lazy='dynamic', order_by='Cuota.periodo.desc()')
-    pagos = relationship('Pago', back_populates='professional', lazy='dynamic', order_by='Pago.fecha_pago.desc()')
-
-    # Back-reference for Facturacion
-    facturas = relationship('Factura', back_populates='professional', lazy='dynamic', order_by='Factura.fecha_emision.desc()')
-
-    # Back-reference for DataChangeRequest
-    data_change_requests = relationship('DataChangeRequest', back_populates='professional', lazy='dynamic', order_by='DataChangeRequest.requested_at.desc()')
-
-    # Back-reference for DocumentoProfesional
-    documentos = relationship('DocumentoProfesional', back_populates='professional', lazy='dynamic', order_by='DocumentoProfesional.fecha_carga.desc()', cascade="all, delete-orphan")
+    
+    # Relationships will be set up in the application factory
+    # to avoid circular imports
 
 
     def __init__(self, first_name, last_name, matricula, status_matricula, email, user_id=None, vigencia_matricula=None, phone_number=None, address=None, title=None, specialization=None, university=None, cbu=None):

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
-from psicoLE.database import db
+from app import db
 from datetime import datetime
 
 class DataChangeRequest(db.Model):
@@ -16,9 +16,8 @@ class DataChangeRequest(db.Model):
     reviewer_id = Column(Integer, ForeignKey('users.id'), nullable=True) # admin/staff who reviewed
     review_comments = Column(Text, nullable=True)
 
-    # Relationships
-    professional = relationship('Professional', back_populates='data_change_requests')
-    reviewer = relationship('User', back_populates='reviewed_data_changes')
+    # Relationships will be set up in the application factory
+    # to avoid circular imports
 
     def __init__(self, professional_id, field_name, new_value, old_value=None, status='pending', review_comments=None):
         self.professional_id = professional_id

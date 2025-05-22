@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from psicoLE.database import db
+from app import db
 from .models import User, Role
 from .forms import RegistrationForm, LoginForm
 
@@ -35,36 +35,22 @@ def register():
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('hello_world')) # Or a dashboard route
+        return redirect(url_for('hello_world'))
+        
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and check_password_hash(user.password_hash, form.password.data):
+        if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
-            # Store additional info in session if needed, though current_user handles most
             session['username'] = user.username
-            if user.role:
-                session['role'] = user.role.name
-            else:
-                session['role'] = 'N/A' # Should not happen if role is assigned at registration
+            session['role'] = user.role.name if user.role else 'N/A'
             
-            flash('Login successful!', 'success')
-            # Redirect to a dashboard or home page
-            # For now, let's redirect to the main page.
-            # A better target would be a user-specific dashboard.
+            flash('¡Inicio de sesión exitoso!', 'success')
             next_page = request.args.get('next')
-            
-            # Role-based redirect
-            if current_user.role:
-                if current_user.role.name in ['admin', 'staff']:
-                    return redirect(next_page or url_for('admin_dashboard.admin_dashboard_main'))
-                elif current_user.role.name == 'professional':
-                    return redirect(next_page or url_for('autogestion.autogestion_main_dashboard'))
-            
-            return redirect(next_page or url_for('hello_world')) # Default fallback
+            return redirect(next_page) if next_page else redirect(url_for('hello_world'))
         else:
-            flash('Login Unsuccessful. Please check username and password', 'danger')
-    return render_template('login.html', title='Login', form=form)
+            flash('Usuario o contraseña incorrectos', 'danger')
+    return render_template('auth/login.html', title='Iniciar Sesión', form=form)
 
 @auth_bp.route('/logout')
 @login_required
