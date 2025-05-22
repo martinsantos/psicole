@@ -1,9 +1,67 @@
 {% extends "base.html" %}
 {% from "_form_macros.html" import render_field %}
+<<<<<<< HEAD
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - Reports - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
+{{ render_breadcrumbs([
+    {'url': url_for('reports.overdue_fees_report'), 'text': 'Reports'},
+    {'text': 'Professional Account Status'}
+]) }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-user-shield me-2"></i>{{ title }}</h2>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-user-tie me-1"></i> Select Professional</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('reports.professional_account_status_report') }}">
+                {{ form.hidden_tag() }} {# If using CSRF from Flask-WTF #}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        {{ render_field(form.professional_id, label_visible=false) }} {# Label provided by card header #}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.submit_report(class="btn btn-primary w-100") }}
+                    </div>
+                </div>
+                 {% if form.professional_id.errors %}
+                    <div class="alert alert-danger mt-2 small">
+                        {% for error in form.professional_id.errors %}
+                            <span>{{ error }}</span><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+
+    {% if professional_data %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0">Account Status for: <a href="{{ url_for('profesionales.detail_professional', professional_id=professional_data.id) }}">{{ professional_data.first_name }} {{ professional_data.last_name }}</a> (Matrícula: {{ professional_data.matricula }})</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-{{ 'danger' if overall_balance < 0 else 'success' if overall_balance == 0 else 'warning' }} shadow-sm">
+                <i class="fas fa-balance-scale me-1"></i>
+                <strong>Overall Account Balance: <span class="fw-bold fs-5">${{ "%.2f"|format(overall_balance) }}</span></strong>
+                <br><small>(Total Expected Fees: ${{ "%.2f"|format(fees|sum(attribute='monto_esperado')) }} - Total Confirmed Payments: ${{ "%.2f"|format(payments|selectattr('confirmado')|sum(attribute='monto')) }})</small>
+            </div>
+
+            <h5 class="mt-4"><i class="fas fa-file-invoice-dollar me-1"></i> Fees (Cuotas)</h5>
+            {% if fees %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-hover">
+=======
 <div class="container-fluid">
     <h2>{{ title }}</h2>
 
@@ -40,12 +98,18 @@
             <h5 class="mt-4">Fees (Cuotas)</h5>
             {% if fees %}
             <table class="table table-sm table-striped">
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 <thead>
                     <tr>
                         <th>Periodo</th>
                         <th>Due Date</th>
+<<<<<<< HEAD
+                        <th class="text-end">Expected</th>
+                        <th class="text-end">Paid</th>
+=======
                         <th>Expected</th>
                         <th>Paid</th>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -53,14 +117,36 @@
                     {% for fee in fees %}
                     <tr>
                         <td><a href="{{ url_for('cobranzas.detail_fee', cuota_id=fee.id) }}">{{ fee.periodo }}</a></td>
+<<<<<<< HEAD
+                        <td>{{ fee.fecha_vencimiento.strftime('%d/%m/%Y') if fee.fecha_vencimiento else 'N/A' }}</td>
+                        <td class="text-end">${{ "%.2f"|format(fee.monto_esperado) }}</td>
+                        <td class="text-end">${{ "%.2f"|format(fee.monto_pagado) }}</td>
+                        <td><span class="badge bg-{{ 'success' if fee.estado == 'paid' else 'warning' if fee.estado in ['pending', 'partially_paid'] else 'danger' if fee.estado == 'overdue' else 'secondary' }} rounded-pill">{{ fee.estado|title }}</span></td>
+=======
                         <td>{{ fee.fecha_vencimiento.strftime('%Y-%m-%d') if fee.fecha_vencimiento else 'N/A' }}</td>
                         <td>${{ "%.2f"|format(fee.monto_esperado) }}</td>
                         <td>${{ "%.2f"|format(fee.monto_pagado) }}</td>
                         <td><span class="badge bg-{{ 'success' if fee.estado == 'paid' else 'warning' if fee.estado in ['pending', 'partially_paid'] else 'danger' if fee.estado == 'overdue' else 'secondary' }}">{{ fee.estado|title }}</span></td>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+<<<<<<< HEAD
+            </div>
+            {% else %}
+            <p class="text-muted">No fees found for this professional.</p>
+            {% endif %}
+
+            <h5 class="mt-4"><i class="fas fa-money-bill-wave me-1"></i> Payments</h5>
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Payment Date</th>
+                        <th class="text-end">Amount</th>
+=======
             {% else %}
             <p>No fees found for this professional.</p>
             {% endif %}
@@ -72,6 +158,7 @@
                     <tr>
                         <th>Payment Date</th>
                         <th>Amount</th>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                         <th>Method</th>
                         <th>Reference</th>
                         <th>Linked Fee Period</th>
@@ -81,30 +168,51 @@
                 <tbody>
                     {% for payment in payments %}
                     <tr>
+<<<<<<< HEAD
+                        <td>{{ payment.fecha_pago.strftime('%d/%m/%Y %H:%M') if payment.fecha_pago else 'N/A' }}</td>
+                        <td class="text-end">${{ "%.2f"|format(payment.monto) }}</td>
+=======
                         <td>{{ payment.fecha_pago.strftime('%Y-%m-%d %H:%M:%S') if payment.fecha_pago else 'N/A' }}</td>
                         <td>${{ "%.2f"|format(payment.monto) }}</td>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                         <td>{{ payment.metodo_pago.replace('_', ' ').title() if payment.metodo_pago else 'N/A' }}</td>
                         <td>{{ payment.referencia_pago or 'N/A' }}</td>
                         <td>
                             {% if payment.cuota %}
                                 <a href="{{ url_for('cobranzas.detail_fee', cuota_id=payment.cuota.id) }}">{{ payment.cuota.periodo }}</a>
                             {% else %}
+<<<<<<< HEAD
+                                <span class="text-muted">N/A</span>
+=======
                                 N/A
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                             {% endif %}
                         </td>
                         <td>
                             {% if payment.confirmado %}
+<<<<<<< HEAD
+                                <span class="badge bg-success rounded-pill">Yes</span>
+                            {% else %}
+                                <span class="badge bg-warning rounded-pill">No</span>
+=======
                                 <span class="badge bg-success">Yes</span>
                             {% else %}
                                 <span class="badge bg-warning">No</span>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                             {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+<<<<<<< HEAD
+            </div>
+            {% else %}
+            <p class="text-muted">No payments found for this professional.</p>
+=======
             {% else %}
             <p>No payments found for this professional.</p>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
             {% endif %}
         </div>
     </div>

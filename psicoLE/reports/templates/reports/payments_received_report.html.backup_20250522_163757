@@ -1,9 +1,57 @@
 {% extends "base.html" %}
 {% from "_form_macros.html" import render_field %}
+<<<<<<< HEAD
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - Reports - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
+{{ render_breadcrumbs([
+    {'url': url_for('reports.overdue_fees_report'), 'text': 'Reports'},
+    {'text': 'Payments Received'}
+]) }}
+<div class="container-fluid">
+     <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-hand-holding-usd me-2 text-success"></i>{{ title }}</h2>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-filter me-1"></i> Filter Options</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('reports.payments_received_report') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        {{ render_field(form.start_date, type="date", label_visible=true, label_text="Payment Date From:") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ render_field(form.end_date, type="date", label_visible=true, label_text="Payment Date To:") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ render_field(form.payment_method) }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.submit_filter(class="btn btn-primary w-100") }}
+                        <a href="{{ url_for('reports.payments_received_report') }}" class="btn btn-secondary w-100 mt-1"><i class="fas fa-eraser me-1"></i> Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if payments %}
+    <div class="alert alert-success shadow-sm">
+        <i class="fas fa-check-circle me-1"></i>
+        <strong>Total Received Amount (Confirmed, for filtered results): <span class="fw-bold fs-5">${{ "%.2f"|format(total_received_amount) }}</span></strong>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm caption-top">
+        <caption>List of received payments based on selected filters.</caption>
+=======
 <div class="container-fluid">
     <h2>{{ title }}</h2>
 
@@ -30,13 +78,18 @@
         <strong>Total Received Amount (Confirmed, for filtered results): ${{ "%.2f"|format(total_received_amount) }}</strong>
     </div>
     <table class="table table-striped table-hover table-sm">
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
         <thead>
             <tr>
                 <th>Payment Date</th>
                 <th>Professional Name</th>
                 <th>Matrícula</th>
                 <th>Fee Period</th>
+<<<<<<< HEAD
+                <th class="text-end">Amount Paid</th>
+=======
                 <th>Amount Paid</th>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 <th>Method</th>
                 <th>Reference</th>
                 <th>Confirmed</th>
@@ -45,7 +98,11 @@
         <tbody>
             {% for payment in payments %}
             <tr>
+<<<<<<< HEAD
+                <td>{{ payment.fecha_pago.strftime('%d/%m/%Y %H:%M') if payment.fecha_pago else 'N/A' }}</td>
+=======
                 <td>{{ payment.fecha_pago.strftime('%Y-%m-%d %H:%M:%S') if payment.fecha_pago else 'N/A' }}</td>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 <td>
                     {% if payment.professional %}
                         <a href="{{ url_for('profesionales.detail_professional', professional_id=payment.professional.id) }}">
@@ -60,23 +117,48 @@
                     {% if payment.cuota %}
                         <a href="{{ url_for('cobranzas.detail_fee', cuota_id=payment.cuota.id) }}">{{ payment.cuota.periodo }}</a>
                     {% else %}
+<<<<<<< HEAD
+                        <span class="text-muted">General Payment</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">${{ "%.2f"|format(payment.monto) }}</td>
+=======
                         General Payment
                     {% endif %}
                 </td>
                 <td>${{ "%.2f"|format(payment.monto) }}</td>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 <td>{{ payment.metodo_pago.replace('_', ' ').title() if payment.metodo_pago else 'N/A' }}</td>
                 <td>{{ payment.referencia_pago or 'N/A' }}</td>
                 <td>
                     {% if payment.confirmado %}
+<<<<<<< HEAD
+                        <span class="badge bg-success rounded-pill">Yes</span>
+                    {% else %}
+                        <span class="badge bg-warning rounded-pill">No</span>
+=======
                         <span class="badge bg-success">Yes</span>
                     {% else %}
                         <span class="badge bg-warning">No</span>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
+<<<<<<< HEAD
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-end fw-bold">Total Received (Confirmed):</td>
+                <td class="text-end fw-bold">${{ "%.2f"|format(total_received_amount) }}</td>
+                <td colspan="3"></td> {# Empty cells for remaining columns #}
+            </tr>
+        </tfoot>
     </table>
+    </div>
+=======
+    </table>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     {% else %}
     <div class="alert alert-warning">No payments found matching your criteria.</div>
     {% endif %}

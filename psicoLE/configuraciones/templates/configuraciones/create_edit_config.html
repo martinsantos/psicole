@@ -1,46 +1,9 @@
 {% extends "base.html" %}
 {% from "_form_macros.html" import render_field %}
-<<<<<<< HEAD
-{% from "_breadcrumbs.html" import render_breadcrumbs %}
-=======
->>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - Configuraciones - PsicoLE{% endblock %}
 
 {% block content %}
-<<<<<<< HEAD
-{% set breadcrumb_items = [{'url': url_for('configuraciones.list_configurations'), 'text': 'System Configurations'}] %}
-{% if config_id %}
-    {% set _ = breadcrumb_items.append({'text': 'Edit: ' + form.key.data}) %}
-{% else %}
-    {% set _ = breadcrumb_items.append({'text': 'Create New'}) %}
-{% endif %}
-{{ render_breadcrumbs(breadcrumb_items) }}
-
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h2 class="h4 mb-0"><i class="fas fa-edit me-2"></i>{{ legend }}</h2>
-            </div>
-            <div class="card-body">
-                <form method="POST" action=""> {# Action URL will be set by the view #}
-                    {{ form.hidden_tag() }}
-                    <fieldset class="form-group">
-                        
-                        {{ render_field(form.key, readonly=form.key.render_kw.get('readonly', false), description="Configuration key (cannot be changed after creation).") }}
-                        {{ render_field(form.value, description="The value for this configuration key.") }}
-                        {{ render_field(form.description, rows=form.description.render_kw.get('rows', 3), description="Brief explanation of what this configuration key does.") }}
-
-                    </fieldset>
-                    <div class="form-group mt-4 text-end">
-                         <a href="{{ url_for('configuraciones.list_configurations') }}" class="btn btn-secondary me-2"><i class="fas fa-times me-1"></i> Cancel</a>
-                        {{ form.submit(class="btn btn-primary") }} {# Icon can be added via JS or if form macro supports it #}
-                    </div>
-                </form>
-            </div>
-        </div>
-=======
 <div class="row justify-content-center">
     <div class="col-md-8">
         <h2>{{ legend }}</h2>
@@ -60,7 +23,6 @@
                 <a href="{{ url_for('configuraciones.list_configurations') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
->>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     </div>
 </div>
 {% endblock %}

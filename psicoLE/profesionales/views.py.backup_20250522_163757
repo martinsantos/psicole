@@ -1,3 +1,56 @@
+<<<<<<< HEAD
+from flask import render_template, redirect, url_for, flash, request, abort, current_app
+from flask_login import current_user, login_required
+from datetime import datetime
+from . import profesionales_bp
+from ..database import db
+from ..auth.decorators import roles_required
+from .models import Professional
+from .forms import ProfessionalForm
+from ..autogestion.models import DocumentoProfesional
+from ..payments.models import Payment
+
+@profesionales_bp.route('/dashboard')
+@login_required
+@roles_required('professional')
+def dashboard():
+    # Get the professional's profile
+    professional = Professional.query.filter_by(user_id=current_user.id).first_or_404()
+    
+    # Get statistics for the dashboard
+    stats = {
+        'documentos_pendientes': DocumentoProfesional.query.filter_by(
+            professional_id=professional.id, 
+            status='pending_review'
+        ).count(),
+        'pagos_pendientes': Payment.query.filter_by(
+            professional_id=professional.id,
+            status='pending'
+        ).count(),
+        'ingresos_totales': sum(
+            p.amount for p in Payment.query.filter_by(
+                professional_id=professional.id,
+                status='completed'
+            ).all()
+        )
+    }
+    
+    # Get recent documents and payments
+    documentos_recientes = DocumentoProfesional.query.filter_by(
+        professional_id=professional.id
+    ).order_by(DocumentoProfesional.uploaded_at.desc()).limit(5).all()
+    
+    pagos_recientes = Payment.query.filter_by(
+        professional_id=professional.id
+    ).order_by(Payment.created_at.desc()).limit(5).all()
+    
+    return render_template('profesionales/dashboard.html',
+                         title='Panel del Profesional',
+                         professional=professional,
+                         stats=stats,
+                         documentos_recientes=documentos_recientes,
+                         pagos_recientes=pagos_recientes)
+=======
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user
 from psicoLE.database import db
@@ -8,6 +61,7 @@ from psicoLE.auth.decorators import roles_required # Assuming decorators.py is i
 profesionales_bp = Blueprint('profesionales', __name__, 
                              template_folder='templates/profesionales',
                              url_prefix='/profesionales') # Added url_prefix here
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 @profesionales_bp.route('/create', methods=['GET', 'POST'])
 @roles_required('admin', 'staff')

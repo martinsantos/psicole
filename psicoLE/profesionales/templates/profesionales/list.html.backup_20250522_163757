@@ -1,8 +1,33 @@
 {% extends "base.html" %}
+<<<<<<< HEAD
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
 
 {% block title %}{{ title }} - PsicoLE{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
+{{ render_breadcrumbs([{'text': 'Professionals'}]) }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-users me-2"></i>{{ title }}</h2>
+        <a href="{{ url_for('profesionales.create_professional') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Create New Professional
+        </a>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <form method="GET" action="{{ url_for('profesionales.list_professionals') }}" class="mb-4 p-3 border rounded bg-light">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="search_term" class="form-label">Search by Name or Matrícula</label>
+                <input type="text" name="search" id="search_term" class="form-control" value="{{ search_term or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="status_filter" class="form-label">Status Matrícula</label>
+                <select name="status_matricula" id="status_filter" class="form-select">
+=======
 <div class="container-fluid">
     <h2>{{ title }}</h2>
     <div class="row mb-3">
@@ -21,6 +46,7 @@
             </div>
             <div class="col-md-4">
                 <select name="status_matricula" class="form-select">
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                     <option value="">All Statuses</option>
                     {% for value, display in status_choices %}
                         <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ display }}</option>
@@ -28,14 +54,24 @@
                 </select>
             </div>
             <div class="col-md-3">
+<<<<<<< HEAD
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Search/Filter</button>
+                <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary w-100 mt-1"><i class="fas fa-eraser"></i> Clear</a>
+=======
                 <button type="submit" class="btn btn-primary">Search/Filter</button>
                 <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary">Clear</a>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
             </div>
         </div>
     </form>
 
     {% if professionals.items %}
+<<<<<<< HEAD
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+=======
     <table class="table table-striped table-hover">
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
         <thead>
             <tr>
                 <th>Name</th>
@@ -51,7 +87,11 @@
             <tr>
                 <td>{{ prof.first_name }} {{ prof.last_name }}</td>
                 <td>{{ prof.matricula }}</td>
+<<<<<<< HEAD
+                <td><span class="badge bg-{{ 'success' if prof.status_matricula == 'active' else 'warning' if prof.status_matricula == 'pending' else 'danger' }}">{{ prof.status_matricula|title }}</span></td>
+=======
                 <td>{{ prof.status_matricula|title }}</td>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 <td>{{ prof.email }}</td>
                 <td>{{ prof.phone_number or 'N/A' }}</td>
                 <td>
@@ -60,7 +100,11 @@
                     <a href="{{ url_for('profesionales.edit_professional', professional_id=prof.id) }}" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>
                     {% endif %}
                     {% if current_user.role.name == 'admin' %}
+<<<<<<< HEAD
+                    <form action="{{ url_for('profesionales.delete_professional', professional_id=prof.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this professional: {{ prof.first_name }} {{ prof.last_name }}? This action cannot be undone.');">
+=======
                     <form action="{{ url_for('profesionales.delete_professional', professional_id=prof.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this professional?');">
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                         <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
                     </form>
                     {% endif %}
@@ -69,6 +113,23 @@
             {% endfor %}
         </tbody>
     </table>
+<<<<<<< HEAD
+    </div>
+
+    <!-- Pagination -->
+    {% if professionals.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {# Previous Page Link #}
+            {% if professionals.has_prev %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=professionals.prev_num, search=search_term, status_matricula=status_filter) }}"><i class="fas fa-chevron-left"></i> Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span></li>
+            {% endif %}
+
+            {# Page Numbers #}
+            {% for page_num in professionals.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=3) %}
+=======
 
     <!-- Pagination -->
     <nav aria-label="Page navigation">
@@ -80,6 +141,7 @@
             {% endif %}
 
             {% for page_num in professionals.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
                 {% if page_num %}
                     {% if professionals.page == page_num %}
                         <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
@@ -87,6 +149,21 @@
                         <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=page_num, search=search_term, status_matricula=status_filter) }}">{{ page_num }}</a></li>
                     {% endif %}
                 {% else %}
+<<<<<<< HEAD
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {# Next Page Link #}
+            {% if professionals.has_next %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('profesionales.list_professionals', page=professionals.next_num, search=search_term, status_matricula=status_filter) }}">Next <i class="fas fa-chevron-right"></i></a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next <i class="fas fa-chevron-right"></i></span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+=======
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
             {% endfor %}
@@ -98,6 +175,7 @@
             {% endif %}
         </ul>
     </nav>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
     {% else %}
     <div class="alert alert-info">No professionals found matching your criteria.</div>
     {% endif %}
