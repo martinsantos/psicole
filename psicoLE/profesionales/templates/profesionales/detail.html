@@ -27,6 +27,7 @@
                     <p><strong>Specialization:</strong> {{ professional.specialization or 'N/A' }}</p>
                     <p><strong>University:</strong> {{ professional.university or 'N/A' }}</p>
                     <p><strong>CBU for Payments:</strong> {{ professional.cbu or 'N/A' }}</p>
+                    <p><strong>Autoriza Débito Automático:</strong> <span class="badge bg-{{ 'success' if professional.autoriza_debito_automatico else 'danger' }}">{{ "Sí" if professional.autoriza_debito_automatico else "No" }}</span></p>
                     {% if professional.user %}
                     <p><strong>Linked User Account:</strong> {{ professional.user.username }}</p>
                     {% else %}

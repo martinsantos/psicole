@@ -22,6 +22,7 @@ class Professional(db.Model):
     specialization = Column(String(100)) # e.g., 'Psicología Clínica'
     university = Column(String(100))
     cbu = Column(String(50)) # Bank account for payments
+    autoriza_debito_automatico = Column(db.Boolean, nullable=False, default=False)
 
     # The relationship should be defined referencing the class name `User` if it's imported,
     # or the table name 'users' as a string if not.
@@ -36,7 +37,7 @@ class Professional(db.Model):
     facturas = relationship('Factura', back_populates='professional', lazy='dynamic', order_by='Factura.fecha_emision.desc()')
 
 
-    def __init__(self, first_name, last_name, matricula, status_matricula, email, user_id=None, vigencia_matricula=None, phone_number=None, address=None, title=None, specialization=None, university=None, cbu=None):
+    def __init__(self, first_name, last_name, matricula, status_matricula, email, user_id=None, vigencia_matricula=None, phone_number=None, address=None, title=None, specialization=None, university=None, cbu=None, autoriza_debito_automatico=False):
         self.user_id = user_id
         self.first_name = first_name
         self.last_name = last_name
@@ -50,6 +51,7 @@ class Professional(db.Model):
         self.specialization = specialization
         self.university = university
         self.cbu = cbu
+        self.autoriza_debito_automatico = autoriza_debito_automatico
 
     def __repr__(self):
         return f'<Professional {self.first_name} {self.last_name} - {self.matricula}>'

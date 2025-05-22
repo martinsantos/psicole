@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('profesionales.list_professionals'), 'text': 'Professionals'},
+    {'text': title}
+]) }}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-book me-2"></i>{{ title }}</h2>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary me-2" onclick="window.print();">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="{{ url_for('profesionales.download_professional_register_pdf', **request.args) }}" class="btn btn-sm btn-danger">
+                <i class="fas fa-file-pdf"></i> Download as PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" action="{{ url_for('profesionales.generate_professional_register') }}" class="mb-4 p-3 border rounded bg-light print-hide">
+        <div class="row g-3 align-items-start">
+            <div class="col-md-4">
+                {{ filter_form.search.label(class="form-label") }}
+                {{ filter_form.search(class="form-control form-control-sm", placeholder="Name or Matrícula") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.status_matricula.label(class="form-label") }}
+                {{ filter_form.status_matricula(class="form-select form-select-sm") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.title.label(class="form-label") }}
+                {{ filter_form.title(class="form-control form-control-sm", placeholder="e.g., Licenciado") }}
+            </div>
+        </div>
+        <div class="row g-3 align-items-start mt-2">
+            <div class="col-md-4">
+                {{ filter_form.specialization.label(class="form-label") }}
+                {{ filter_form.specialization(class="form-control form-control-sm", placeholder="e.g., Psicología Clínica") }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.university.label(class="form-label") }}
+                {{ filter_form.university(class="form-control form-control-sm", placeholder="e.g., UBA") }}
+            </div>
+            <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-filter"></i> Apply Filters</button>
+            </div>
+            <div class="col-md-2 align-self-end">
+                 <a href="{{ url_for('profesionales.generate_professional_register') }}" class="btn btn-secondary btn-sm w-100"><i class="fas fa-eraser"></i> Clear Filters</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Professionals Table -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nombre Completo</th>
+                    <th>Título</th>
+                    <th>Especialización</th>
+                    <th>Estado Matrícula</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if professionals %}
+                    {% for prof in professionals %}
+                    <tr>
+                        <td>{{ prof.matricula }}</td>
+                        <td>{{ prof.last_name }}, {{ prof.first_name }}</td>
+                        <td>{{ prof.title or 'N/A' }}</td>
+                        <td>{{ prof.specialization or 'N/A' }}</td>
+                        <td><span class="badge bg-{{ 'success' if prof.status_matricula == 'active' else 'warning' if prof.status_matricula == 'pending' else 'secondary' if prof.status_matricula == 'inactive' else 'danger' }}">{{ prof.status_matricula|title }}</span></td>
+                        <td>{{ prof.email }}</td>
+                        <td>{{ prof.phone_number or 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            {% if request.args %}
+                                No professionals found matching your criteria.
+                            {% else %}
+                                No active professionals found. Use the filters to broaden your search or select a different status.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted print-only">Report generated on: {{ now() | dateformat('%Y-%m-%d %H:%M:%S') }}</p> {# Example of a print-only element #}
+</div>
+
+<style>
+    @media print {
+        .print-hide {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        /* Additional print-specific styles */
+        body {
+            font-size: 10pt;
+        }
+        .table {
+            margin-top: 0.5rem;
+        }
+        .table td, .table th {
+            padding: 0.25rem;
+        }
+        h2 {
+            margin-bottom: 0.5rem !important;
+        }
+    }
+    .print-only {
+        display: none; /* Hidden by default, shown only on print */
+    }
+</style>
+
+<!-- Font Awesome for icons (ensure it's loaded, typically in base.html) -->
+{% endblock %}

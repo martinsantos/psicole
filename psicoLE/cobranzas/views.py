@@ -1,10 +1,16 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from psicoLE.database import db
 from .models import Cuota, Pago
-from .forms import GenerateFeesForm, FeeFilterForm
-from .services import generate_monthly_fees
+from psicoLE.profesionales.models import Professional # Added for joining
+from .forms import GenerateFeesForm, FeeFilterForm, AutomaticDebitListFilterForm # Added new form
+from .services import generate_monthly_fees, update_fee_status_after_payment # Added update_fee_status
+from .services import create_mercadopago_preference # Added MP preference
 from psicoLE.auth.decorators import roles_required
 from decimal import Decimal, InvalidOperation
+from datetime import date, datetime # Added for type checking/conversion
+import io # For CSV export
+import csv # For CSV export
 
 cobranzas_bp = Blueprint('cobranzas', __name__,
                          template_folder='templates/cobranzas',
@@ -350,3 +356,96 @@ def mercadopago_webhook():
         # Potentially rollback db.session if any operations were attempted and failed mid-way
         # db.session.rollback() # Be careful with rollback if some operations should persist even on error
         return "Internal Server Error", 500 # Or 200 if you want MP to stop retrying for this event
+
+
+@cobranzas_bp.route('/reports/automatic-debit-candidates', methods=['GET', 'POST'])
+@roles_required('admin', 'staff')
+def list_automatic_debit_candidates():
+    form = AutomaticDebitListFilterForm()
+    candidates = []
+    periodo_seleccionado = None
+
+    if form.validate_on_submit():
+        periodo_seleccionado = form.periodo.data
+        try:
+            candidates = db.session.query(
+                Cuota, Professional
+            ).join(Professional, Professional.id == Cuota.professional_id).filter(
+                Cuota.periodo == periodo_seleccionado,
+                Cuota.metodo_pago_preferido == 'debito_automatico',
+                Cuota.estado.in_(['pending', 'overdue', 'partially_paid']) # Include partially_paid
+            ).order_by(Professional.last_name, Professional.first_name).all()
+            
+            if not candidates:
+                flash('No se encontraron candidatos para débito automático para el período seleccionado.', 'info')
+            else:
+                flash(f'{len(candidates)} candidatos encontrados para el período {periodo_seleccionado}.', 'success')
+                
+        except Exception as e:
+            flash(f'Error al buscar candidatos: {str(e)}', 'danger')
+            # Log error e
+
+    return render_template('list_automatic_debit_candidates.html', 
+                           form=form, 
+                           candidates=candidates, 
+                           periodo_seleccionado=periodo_seleccionado,
+                           title='Candidatos para Débito Automático')
+
+
+@cobranzas_bp.route('/reports/automatic-debit-candidates/export-csv')
+@roles_required('admin', 'staff')
+def export_automatic_debit_candidates_csv():
+    periodo = request.args.get('periodo', None)
+    if not periodo:
+        flash('Por favor, especifique un período para exportar.', 'warning')
+        return redirect(url_for('cobranzas.list_automatic_debit_candidates'))
+
+    try:
+        candidates_data = db.session.query(
+            Professional.first_name,
+            Professional.last_name,
+            Professional.matricula,
+            Professional.cbu,
+            Professional.email,
+            Cuota.periodo,
+            (Cuota.monto_esperado - Cuota.monto_pagado).label('monto_adeudado') # Calculate amount due
+        ).join(Professional, Professional.id == Cuota.professional_id).filter(
+            Cuota.periodo == periodo,
+            Cuota.metodo_pago_preferido == 'debito_automatico',
+            Cuota.estado.in_(['pending', 'overdue', 'partially_paid'])
+        ).order_by(Professional.last_name, Professional.first_name).all()
+
+        if not candidates_data:
+            flash(f'No hay candidatos para exportar para el período {periodo}.', 'info')
+            return redirect(url_for('cobranzas.list_automatic_debit_candidates', periodo=periodo))
+
+        # CSV Generation
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Header
+        writer.writerow(["Nombre Profesional", "Apellido Profesional", "Matricula", "CBU", "Email Profesional", "Periodo Cuota", "Monto Adeudado"])
+        
+        for row in candidates_data:
+            writer.writerow([
+                row.first_name,
+                row.last_name,
+                row.matricula,
+                row.cbu,
+                row.email,
+                row.periodo,
+                str(row.monto_adeudado.quantize(Decimal('0.01'))) # Format Decimal to string
+            ])
+        
+        output.seek(0)
+        
+        return Response(
+            output,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment;filename=debitos_automaticos_{periodo.replace('-', '_')}.csv"}
+        )
+
+    except Exception as e:
+        flash(f'Error al exportar CSV: {str(e)}', 'danger')
+        # Log error e
+        return redirect(url_for('cobranzas.list_automatic_debit_candidates', periodo=periodo))

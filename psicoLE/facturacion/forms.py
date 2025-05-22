@@ -55,3 +55,37 @@ class InvoiceForm(FlaskForm):
         #     self.professional_id.render_kw = {'disabled': True} # but this prevents submission
         # A better way is to display it as text or ensure it's validated correctly if it can't be changed.
         # For now, it's just pre-selected.
+
+
+class NotaCreditoForm(FlaskForm):
+    factura_original_id = HiddenField() # Will be set in the view, no direct validators needed here
+    monto_total = DecimalField('Monto del Crédito', 
+                               validators=[DataRequired(message="El monto es obligatorio."), NumberRange(min=0.01, message="El monto debe ser mayor a cero.")], 
+                               places=2,
+                               description="Monto a acreditar.")
+    motivo = TextAreaField('Motivo de la Nota de Crédito', 
+                           validators=[DataRequired(message="El motivo es obligatorio."), Length(max=1000)], 
+                           render_kw={"rows": 3},
+                           description="Ej: Anulación de factura por error en servicio, Devolución parcial, etc.")
+    detalles_adicionales = TextAreaField('Detalles Adicionales (Opcional)', 
+                                         validators=[Optional(), Length(max=1000)], 
+                                         render_kw={"rows": 3},
+                                         description="Cualquier información adicional relevante.")
+    submit = SubmitField('Generar Nota de Crédito')
+
+
+class NotaDebitoForm(FlaskForm):
+    factura_original_id = HiddenField() # Will be set in the view
+    monto_total = DecimalField('Monto del Débito', 
+                               validators=[DataRequired(message="El monto es obligatorio."), NumberRange(min=0.01, message="El monto debe ser mayor a cero.")], 
+                               places=2,
+                               description="Monto a debitar.")
+    motivo = TextAreaField('Motivo de la Nota de Débito', 
+                           validators=[DataRequired(message="El motivo es obligatorio."), Length(max=1000)], 
+                           render_kw={"rows": 3},
+                           description="Ej: Intereses por mora, Ajuste de precio, Gastos adicionales no facturados.")
+    detalles_adicionales = TextAreaField('Detalles Adicionales (Opcional)', 
+                                         validators=[Optional(), Length(max=1000)], 
+                                         render_kw={"rows": 3},
+                                         description="Cualquier información adicional relevante.")
+    submit = SubmitField('Generar Nota de Débito')

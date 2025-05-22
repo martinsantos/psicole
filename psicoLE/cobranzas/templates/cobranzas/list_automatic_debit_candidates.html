@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+{% from "_form_macros.html" import render_field %}
+
+{% block title %}{{ title }} - Cobranzas - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('cobranzas.list_fees'), 'text': 'Cobranzas'},
+    {'text': title}
+]) }}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-hand-holding-usd me-2"></i>{{ title }}</h2>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('cobranzas.list_automatic_debit_candidates') }}">
+                {{ form.csrf_token }}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        {{ render_field(form.periodo, label_visible=true) }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.submit(class="btn btn-primary w-100") }}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if periodo_seleccionado %}
+        {% if candidates %}
+            <div class="d-flex justify-content-end mb-3">
+                <a href="{{ url_for('cobranzas.export_automatic_debit_candidates_csv', periodo=periodo_seleccionado) }}" class="btn btn-success">
+                    <i class="fas fa-file-csv me-2"></i>Exportar a CSV
+                </a>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h4 class="h5 mb-0">Resultados para el Período: {{ periodo_seleccionado }}</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre Profesional</th>
+                                <th>Matrícula</th>
+                                <th>CBU</th>
+                                <th>Email</th>
+                                <th>Período Cuota</th>
+                                <th>Monto Adeudado</th>
+                                <th>Estado Cuota</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cuota, professional in candidates %}
+                            <tr>
+                                <td>{{ professional.last_name }}, {{ professional.first_name }}</td>
+                                <td>{{ professional.matricula }}</td>
+                                <td>{{ professional.cbu or 'N/A' }}</td>
+                                <td>{{ professional.email }}</td>
+                                <td>{{ cuota.periodo }}</td>
+                                <td>${{ (cuota.monto_esperado - cuota.monto_pagado)|round(2) }}</td>
+                                <td><span class="badge bg-{{ 'warning' if cuota.estado == 'pending' else 'danger' if cuota.estado == 'overdue' else 'info' }}">{{ cuota.estado|title }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% elif request.method == 'POST' %} {# Only show 'no candidates' if form was submitted #}
+            <div class="alert alert-info">No se encontraron candidatos para débito automático para el período {{ periodo_seleccionado }}.</div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-secondary">Por favor, ingrese un período para buscar candidatos.</div>
+    {% endif %}
+</div>
+{% endblock %}

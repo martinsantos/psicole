@@ -67,7 +67,88 @@
                 <button type="submit" class="btn btn-danger">Anular Factura</button>
             </form>
             {% endif %} #}
+            {% if factura.estado == 'emitida' %} {# Only allow creating NC/ND for non-anulada invoices #}
+            <a href="{{ url_for('facturacion.create_credit_note', factura_id=factura.id) }}" class="btn btn-info ms-2">
+                <i class="fas fa-minus-circle me-1"></i> Crear Nota de Crédito
+            </a>
+            <a href="{{ url_for('facturacion.create_debit_note', factura_id=factura.id) }}" class="btn btn-warning ms-2">
+                <i class="fas fa-plus-circle me-1"></i> Crear Nota de Débito
+            </a>
+            {% endif %}
         </div>
     </div>
+
+    {# Associated Credit Notes Section #}
+    {% if factura.notas_credito.all() %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Notas de Crédito Asociadas</h4>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Número NC</th>
+                        <th>Fecha Emisión</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nc in factura.notas_credito.all() %}
+                    <tr>
+                        <td><a href="{{ url_for('facturacion.detail_credit_note', credit_note_id=nc.id) }}">{{ nc.numero_nota_credito }}</a></td>
+                        <td>{{ nc.fecha_emision.strftime('%d/%m/%Y') }}</td>
+                        <td>${{ nc.monto_total|round(2) }}</td>
+                        <td><span class="badge bg-{{ 'success' if nc.estado == 'emitida' else 'secondary' }}">{{ nc.estado|title }}</span></td>
+                        <td>
+                            <a href="{{ url_for('facturacion.detail_credit_note', credit_note_id=nc.id) }}" class="btn btn-xs btn-info" title="Ver Detalle"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('facturacion.download_credit_note_pdf', credit_note_id=nc.id) }}" class="btn btn-xs btn-danger" title="PDF"><i class="fas fa-file-pdf"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Associated Debit Notes Section #}
+    {% if factura.notas_debito.all() %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Notas de Débito Asociadas</h4>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Número ND</th>
+                        <th>Fecha Emisión</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nd in factura.notas_debito.all() %}
+                    <tr>
+                        <td><a href="{{ url_for('facturacion.detail_debit_note', debit_note_id=nd.id) }}">{{ nd.numero_nota_debito }}</a></td>
+                        <td>{{ nd.fecha_emision.strftime('%d/%m/%Y') }}</td>
+                        <td>${{ nd.monto_total|round(2) }}</td>
+                        <td><span class="badge bg-{{ 'success' if nd.estado == 'emitida' else 'secondary' }}">{{ nd.estado|title }}</span></td>
+                        <td>
+                            <a href="{{ url_for('facturacion.detail_debit_note', debit_note_id=nd.id) }}" class="btn btn-xs btn-info" title="Ver Detalle"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('facturacion.download_debit_note_pdf', debit_note_id=nd.id) }}" class="btn btn-xs btn-warning" title="PDF"><i class="fas fa-file-pdf"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

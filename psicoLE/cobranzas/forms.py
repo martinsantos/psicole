@@ -126,3 +126,15 @@ class ManualPaymentForm(FlaskForm):
         # A simpler approach for display: show professional name as text if cuota is set.
         # Or, if QuerySelectField must be used, ensure its data is correctly set and validated.
         # Current setup: it will be pre-selected if cuota.professional is in the list of active professionals.
+
+
+class AutomaticDebitListFilterForm(FlaskForm):
+    periodo = StringField(
+        'Periodo (YYYY-MM)', 
+        validators=[
+            DataRequired(message="El campo Periodo es obligatorio."), 
+            Regexp(r'^\d{4}-\d{2}$', message="El Periodo debe tener el formato YYYY-MM.")
+        ],
+        render_kw={"placeholder": "YYYY-MM"}
+    )
+    submit = SubmitField('Ver Candidatos para Débito Automático')
