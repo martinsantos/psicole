@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - Autogestión - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([{'text': 'My Profile & Requests'}]) }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+         <h2 class="h3"><i class="fas fa-id-card me-2"></i>{{ title }}</h2>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h4 class="h5 mb-0"><i class="fas fa-user-circle me-2"></i>My Personal and Contact Information</h4>
+            <a href="{{ url_for('autogestion.request_profile_change') }}" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i> Request Profile Changes
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">First Name:</dt><dd class="col-sm-8">{{ professional.first_name }}</dd>
+                        <dt class="col-sm-4">Last Name:</dt><dd class="col-sm-8">{{ professional.last_name }}</dd>
+                        <dt class="col-sm-4">Matrícula:</dt><dd class="col-sm-8">{{ professional.matricula }}</dd>
+                        <dt class="col-sm-4">Status Matrícula:</dt><dd class="col-sm-8"><span class="badge bg-{{ 'success' if professional.status_matricula == 'active' else 'warning' if professional.status_matricula == 'pending' else 'danger' }} rounded-pill">{{ professional.status_matricula|title }}</span></dd>
+                        <dt class="col-sm-4">Vigencia Matrícula:</dt><dd class="col-sm-8">{{ professional.vigencia_matricula.strftime('%d/%m/%Y') if professional.vigencia_matricula else 'N/A' }}</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                     <dl class="row">
+                        <dt class="col-sm-4">Email:</dt><dd class="col-sm-8"><a href="mailto:{{ professional.email }}">{{ professional.email }}</a></dd>
+                        <dt class="col-sm-4">Phone Number:</dt><dd class="col-sm-8">{{ professional.phone_number or 'N/A' }}</dd>
+                        <dt class="col-sm-4">Address:</dt><dd class="col-sm-8">{{ professional.address|nl2br or 'N/A' }}</dd>
+                        <dt class="col-sm-4">CBU:</dt><dd class="col-sm-8">{{ professional.cbu or 'N/A' }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Information <small class="text-muted">(Read-Only via this panel)</small></h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Title:</dt><dd class="col-sm-8">{{ professional.title or 'N/A' }}</dd>
+                        <dt class="col-sm-4">Specialization:</dt><dd class="col-sm-8">{{ professional.specialization or 'N/A' }}</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                     <dl class="row">
+                        <dt class="col-sm-4">University:</dt><dd class="col-sm-8">{{ professional.university or 'N/A' }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="my-change-requests" class="mb-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                 <h3 class="h5 mb-0"><i class="fas fa-history me-2"></i>My Data Change Requests</h3>
+            </div>
+            <div class="card-body">
+                <h4 class="h6">Pending Requests</h4>
+                {% if pending_requests %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Current Value (Old)</th>
+                        <th>Requested Value (New)</th>
+                        <th>Requested At</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                    <tr>
+                        <td>{{ req.field_name|replace('_', ' ')|title }}</td>
+                        <td>{{ req.old_value or 'N/A' }}</td>
+                        <td>{{ req.new_value }}</td>
+                        <td>{{ req.requested_at.strftime('%Y-%m-%d %H:%M:%S') if req.requested_at else 'N/A' }}</td>
+                        <td><span class="badge bg-warning">{{ req.status|title }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No pending data change requests.</p>
+        {% endif %}
+
+        <h4 class="mt-4">Recently Reviewed Requests (Last 5)</h4>
+        {% if recent_reviewed_requests %}
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Old Value</th>
+                        <th>New Value</th>
+                        <th>Requested At</th>
+                        <th>Status</th>
+                        <th>Reviewed At</th>
+                        <th>Reviewer Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in recent_reviewed_requests %}
+                    <tr>
+                        <td>{{ req.field_name|replace('_', ' ')|title }}</td>
+                        <td>{{ req.old_value or 'N/A' }}</td>
+                        <td>{{ req.new_value }}</td>
+                        <td>{{ req.requested_at.strftime('%Y-%m-%d %H:%M:%S') if req.requested_at else 'N/A' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if req.status == 'approved' else 'danger' if req.status == 'rejected' else 'secondary' }}">
+                                {{ req.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ req.reviewed_at.strftime('%Y-%m-%d %H:%M:%S') if req.reviewed_at else 'N/A' }}</td>
+                        <td>{{ req.review_comments or 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No recently reviewed data change requests.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

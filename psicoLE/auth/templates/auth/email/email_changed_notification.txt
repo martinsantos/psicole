@@ -1,0 +1,30 @@
+Notificación de Cambio de Correo - PsicoLE
+
+Hola {{ user.username }},
+
+Queremos informarte que la dirección de correo electrónico asociada a tu cuenta de PsicoLE ha sido actualizada.
+
+Detalles del cambio:
+- Correo anterior: {{ old_email }}
+- Nuevo correo: {{ new_email }}
+- Fecha del cambio: {{ change_date.strftime('%d/%m/%Y a las %H:%M') }} ({{ timezone }})
+
+¡IMPORTANTE! Si no realizaste este cambio, por favor contáctanos de inmediato para asegurar la seguridad de tu cuenta.
+
+Si reconoces este cambio, puedes ignorar este mensaje. Si no reconoces esta actividad, te recomendamos:
+
+1. Cambiar tu contraseña de inmediato: {{ url_for('auth.reset_password_request', _external=True) }}
+2. Revisar la actividad reciente de tu cuenta
+3. Contactar a nuestro equipo de soporte: {{ url_for('main.contact', _external=True) }}
+
+Gracias por confiar en PsicoLE.
+
+Saludos cordiales,
+El equipo de PsicoLE
+
+---
+© {{ now.year }} PsicoLE. Todos los derechos reservados.
+
+¿Por qué recibes este correo? Esta es una notificación de seguridad que se envía cuando se detectan cambios importantes en tu cuenta.
+
+Este es un correo automático, por favor no respondas a este mensaje.

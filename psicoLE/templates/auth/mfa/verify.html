@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-lock" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                        </div>
+                        <h5>Verificación de seguridad</h5>
+                        <p class="text-muted">
+                            Por favor, ingresa el código de verificación de 6 dígitos de tu aplicación de autenticación.
+                        </p>
+                    </div>
+                    
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.code.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.code(class="form-control form-control-lg text-center" + (' is-invalid' if form.code.errors else ''), 
+                                          autocomplete="one-time-code", inputmode="numeric", pattern="\d{6}", 
+                                          placeholder="123456") }}
+                            </div>
+                            {% if form.code.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="form-text">Ingresa el código de 6 dígitos de tu aplicación de autenticación.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-2">¿No tienes acceso a tu aplicación de autenticación?</p>
+                        <a href="{{ url_for('auth.mfa_verify.recovery') }}" class="btn btn-outline-secondary">
+                            Usar código de recuperación
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-light text-center">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check"></i> Protegiendo tu cuenta con autenticación en dos pasos
+                    </small>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.login.login') }}" class="text-decoration-none">
+                    <i class="bi bi-arrow-left"></i> Volver al inicio de sesión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Auto-focus the code input
+    document.addEventListener('DOMContentLoaded', function() {
+        const codeInput = document.getElementById('{{ form.code.id }}');
+        if (codeInput) {
+            codeInput.focus();
+            
+            // Auto-submit form when 6 digits are entered
+            codeInput.addEventListener('input', function(e) {
+                // Remove any non-digit characters
+                this.value = this.value.replace(/\D/g, '');
+                
+                // Limit to 6 digits
+                if (this.value.length > 6) {
+                    this.value = this.value.slice(0, 6);
+                }
+                
+                // Auto-submit when 6 digits are entered
+                if (this.value.length === 6) {
+                    this.form.submit();
+                }
+            });
+            
+            // Allow pasting a code
+            codeInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text/plain');
+                const digits = pastedData.replace(/\D/g, '');
+                this.value = digits.slice(0, 6);
+                
+                // Auto-submit if we have 6 digits
+                if (this.value.length === 6) {
+                    this.form.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

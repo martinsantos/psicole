@@ -1,0 +1,222 @@
+{% extends 'admin/base.html' %}
+
+{% block header %}
+<div class="d-flex justify-content-between align-items-center">
+    <h1 class="h2 mb-0">Panel de Administración</h1>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download"></i> Exportar
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-gear"></i> Configuración
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card border-start-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Usuarios Totales</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ user_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-start-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Sesiones Activas</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_sessions }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-activity fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-start-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Eventos de Seguridad (7d)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ security_events_7d }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-shield-lock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-start-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Usuarios Nuevos (7d)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ new_users_7d }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Actividad Reciente</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
+                        <li><a class="dropdown-item" href="#">Ver todo</a></li>
+                        <li><a class="dropdown-item" href="#">Exportar</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for event in recent_activity %}
+                    <div class="list-group-item list-group-item-action
+                        {% if event.event_type == 'login_success' %}list-group-item-success
+                        {% elif event.event_type == 'login_failed' %}list-group-item-danger
+                        {% elif event.event_type == 'password_changed' %}list-group-item-info
+                        {% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if event.user %}{{ event.user.email }}{% else %}Sistema{% endif %}
+                            </h6>
+                            <small>{{ event.created_at|datetimeformat('%H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">
+                            {% if event.event_type == 'login_success' %}
+                                <i class="bi bi-box-arrow-in-right"></i> Inicio de sesión exitoso
+                            {% elif event.event_type == 'login_failed' %}
+                                <i class="bi bi-exclamation-triangle"></i> Intento de inicio de sesión fallido
+                            {% elif event.event_type == 'password_changed' %}
+                                <i class="bi bi-key"></i> Contraseña actualizada
+                            {% else %}
+                                {{ event.event_type }}
+                            {% endif %}
+                        </p>
+                        <small class="text-muted">
+                            {{ event.ip_address }} - {{ event.created_at|datetimeformat('%d/%m/%Y') }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('securityevent.index_view') }}" class="btn btn-sm btn-primary">
+                        Ver todos los eventos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Distribution -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Distribución de Usuarios</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4">
+                    <canvas id="userRoleChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    {% for role in user_roles %}
+                    <span class="me-3">
+                        <i class="fas fa-circle" style="color: {{ role.color }}"></i> {{ role.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // User Role Distribution Pie Chart
+    var ctx = document.getElementById('userRoleChart');
+    var userRoleChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                {% for role in user_roles %}'{{ role.name }}'{% if not loop.last %}, {% endif %}{% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for role in user_roles %}{{ role.count }}{% if not loop.last %}, {% endif %}{% endfor %}
+                ],
+                backgroundColor: [
+                    {% for role in user_roles %}'{{ role.color }}'{% if not loop.last %}, {% endif %}{% endfor %}
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((context.parsed / total) * 100);
+                                label += context.parsed + ' (' + percentage + '%)';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+
+{% block title %}{{ title }} - Admin Dashboard - PsicoLE{% endblock %}
+
+{% block content %}
+{{ render_breadcrumbs([
+    {'url': url_for('admin_dashboard.list_pending_data_changes'), 'text': 'Pending Data Changes'},
+    {'text': 'Review Request ID: ' + change_request.id|string}
+]) }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-user-check me-2"></i>{{ title }}</h2>
+    </div>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0">Request Details</h4>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Professional:</dt>
+                <dd class="col-sm-9">
+                    <a href="{{ url_for('profesionales.detail_professional', professional_id=professional.id) }}">
+                        {{ professional.first_name }} {{ professional.last_name }}
+                    </a>
+                    (Matrícula: {{ professional.matricula }})
+                </dd>
+
+                <dt class="col-sm-3">Field to Change:</dt>
+                <dd class="col-sm-9">{{ change_request.field_name|replace('_', ' ')|title }}</dd>
+
+                <dt class="col-sm-3">Current (Old) Value:</dt>
+                <dd class="col-sm-9"><pre class="small bg-light p-2 rounded mb-0">{{ change_request.old_value or 'N/A' }}</pre></dd>
+
+                <dt class="col-sm-3">Requested (New) Value:</dt>
+                <dd class="col-sm-9"><pre class="small bg-light p-2 rounded mb-0">{{ change_request.new_value }}</pre></dd>
+
+                <dt class="col-sm-3">Requested At:</dt>
+                <dd class="col-sm-9">{{ change_request.requested_at.strftime('%d/%m/%Y %H:%M') if change_request.requested_at else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Current Status:</dt>
+                <dd class="col-sm-9"><span class="badge bg-warning rounded-pill">{{ change_request.status|title }}</span></dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h4 class="h5 mb-0"><i class="fas fa-gavel me-2"></i>Review Action</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin_dashboard.review_data_change', request_id=change_request.id) }}">
+                <div class="form-group mb-3">
+                    <label for="review_comments" class="form-label">Review Comments <small class="text-muted">(Optional, but recommended for rejections)</small>:</label>
+                    <textarea name="review_comments" id="review_comments" class="form-control" rows="3" placeholder="Provide reasoning for approval or rejection..."></textarea>
+                </div>
+                
+                <div class="form-group text-end">
+                    <a href="{{ url_for('admin_dashboard.list_pending_data_changes') }}" class="btn btn-secondary me-2"><i class="fas fa-times me-1"></i> Cancel</a>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger me-2">
+                        <i class="fas fa-ban me-1"></i> Reject Change
+                    </button>
+                    <button type="submit" name="action" value="approve" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Approve Change
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

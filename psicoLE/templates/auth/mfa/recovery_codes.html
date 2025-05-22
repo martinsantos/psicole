@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Códigos de recuperación</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            ¡Guarda estos códigos en un lugar seguro!
+                        </h5>
+                        <p class="mb-0">
+                            Estos códigos te permitirán acceder a tu cuenta si pierdes acceso a tu dispositivo de autenticación.
+                            Cada código solo se puede usar una vez.
+                        </p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <strong>Consejo de seguridad:</strong> Guarda estos códigos en un gestor de contraseñas o imprímelos y guárdalos en un lugar seguro.
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Tus códigos de recuperación</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 mb-3">
+                                {% for code in recovery_codes %}
+                                    <div class="col-12 col-md-6">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control font-monospace text-center" value="{{ code }}" readonly>
+                                            <button class="btn btn-outline-secondary copy-code" type="button" data-code="{{ code }}">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button id="print-codes" class="btn btn-outline-primary">
+                                    <i class="bi bi-printer"></i> Imprimir códigos
+                                </button>
+                                <button id="download-codes" class="btn btn-outline-secondary">
+                                    <i class="bi bi-download"></i> Descargar como TXT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-secondary">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-question-circle-fill"></i>
+                            ¿Cómo usar estos códigos?
+                        </h6>
+                        <p class="mb-0">
+                            Cuando se te solicite el código de verificación en dos pasos, selecciona 
+                            "Usar código de recuperación" e ingresa uno de los códigos mostrados arriba.
+                        </p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('account.settings') }}" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Entendido, he guardado mis códigos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Styles -->
+<style type="text/css" media="print">
+    @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+    body {
+        background: white;
+        color: black;
+        font-family: Arial, sans-serif;
+    }
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+    .card-header {
+        background: #f8f9fa !important;
+        color: black !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .btn, .alert {
+        display: none;
+    }
+    .print-title {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .print-codes {
+        font-family: monospace;
+        font-size: 1.1em;
+        line-height: 2;
+    }
+</style>
+
+<!-- Hidden print section -->
+<div id="print-section" class="d-none">
+    <div class="print-title">
+        <h2>Códigos de recuperación</h2>
+        <p>Guarda esta página en un lugar seguro. Estos códigos te permitirán acceder a tu cuenta si pierdes acceso a tu dispositivo de autenticación.</p>
+        <p><strong>Cuenta:</strong> {{ current_user.email }}</p>
+        <p><strong>Fecha de generación:</strong> {{ now.strftime('%d/%m/%Y %H:%M') }}</p>
+        <hr>
+    </div>
+    
+    <div class="print-codes">
+        <h4>Tus códigos de recuperación:</h4>
+        <ul>
+            {% for code in recovery_codes %}
+                <li>{{ code }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="print-instructions mt-4">
+        <h4>Instrucciones:</h4>
+        <ol>
+            <li>Guarda esta página en un lugar seguro y privado.</li>
+            <li>Cada código solo se puede usar una vez.</li>
+            <li>Si pierdes estos códigos, puedes generar unos nuevos en la configuración de seguridad de tu cuenta.</li>
+            <li>Si sospechas que alguien más tiene acceso a estos códigos, genera unos nuevos inmediatamente.</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Copy code to clipboard
+    document.querySelectorAll('.copy-code').forEach(button => {
+        button.addEventListener('click', function() {
+            const code = this.getAttribute('data-code');
+            
+            // Create a temporary textarea element
+            const textarea = document.createElement('textarea');
+            textarea.value = code;
+            textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                // Execute the copy command
+                const successful = document.execCommand('copy');
+                const msg = successful ? 'Código copiado' : 'No se pudo copiar el código';
+                
+                // Show feedback
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check"></i>';
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-success');
+                
+                // Revert button after 2 seconds
+                const button = this;
+                setTimeout(function() {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+                
+            } catch (err) {
+                console.error('Error al copiar: ', err);
+            }
+            
+            // Clean up
+            document.body.removeChild(textarea);
+        });
+    });
+    
+    // Print codes
+    document.getElementById('print-codes').addEventListener('click', function() {
+        // Get the print section content
+        const printContent = document.getElementById('print-section').innerHTML;
+        const originalContent = document.body.innerHTML;
+        
+        // Replace the page content with the print content
+        document.body.innerHTML = printContent;
+        
+        // Print the page
+        window.print();
+        
+        // Restore the original content
+        document.body.innerHTML = originalContent;
+    });
+    
+    // Download codes as TXT
+    document.getElementById('download-codes').addEventListener('click', function() {
+        // Create the content for the text file
+        let content = 'Códigos de recuperación - ' + new Date().toLocaleDateString() + '\n\n';
+        content += 'Guarda este archivo en un lugar seguro. Estos códigos te permitirán acceder a tu cuenta si pierdes acceso a tu dispositivo de autenticación.\n\n';
+        content += 'Cuenta: {{ current_user.email }}\n';
+        content += 'Fecha de generación: {{ now.strftime("%d/%m/%Y %H:%M") }}\n\n';
+        content += 'TUS CÓDIGOS DE RECUPERACIÓN:\n';
+        content += '------------------------------\n';
+        
+        {% for code in recovery_codes %}
+            content += '{{ code }}\n';
+        {% endfor %}
+        
+        content += '\nInstrucciones:\n';
+        content += '1. Guarda este archivo en un lugar seguro y privado.\n';
+        content += '2. Cada código solo se puede usar una vez.\n';
+        content += '3. Si pierdes estos códigos, puedes generar unos nuevos en la configuración de seguridad de tu cuenta.\n';
+        content += '4. Si sospechas que alguien más tiene acceso a estos códigos, genera unos nuevos inmediatamente.\n';
+        
+        // Create a Blob with the file content
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        
+        // Create a download link
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        
+        a.href = url;
+        a.download = `codigos-recuperacion-${timestamp}.txt`;
+        
+        // Trigger the download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+    });
+</script>
+{% endblock %}

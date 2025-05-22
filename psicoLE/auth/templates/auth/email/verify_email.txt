@@ -1,0 +1,20 @@
+Verifica tu correo electrónico - PsicoLE
+
+¡Bienvenido a PsicoLE, {{ user.username }}!
+
+Gracias por registrarte en nuestra plataforma. Para comenzar a utilizar tu cuenta, necesitamos verificar que esta dirección de correo electrónico te pertenece.
+
+Por favor, visita el siguiente enlace para verificar tu correo electrónico:
+{{ verification_link }}
+
+Este enlace expirará en {{ expire_hours }} horas por razones de seguridad.
+
+Si no creaste una cuenta en PsicoLE, puedes ignorar este mensaje con seguridad.
+
+Saludos cordiales,
+El equipo de PsicoLE
+
+---
+© {{ now.year }} PsicoLE. Todos los derechos reservados.
+
+Este es un correo automático, por favor no respondas a este mensaje.

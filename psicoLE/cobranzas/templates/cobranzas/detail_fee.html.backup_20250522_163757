@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+<<<<<<< HEAD
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
+
+{% block title %}{{ title }} - Periodo {{ cuota.periodo }} - PsicoLE{% endblock %}
+
+{% block content %}
+<<<<<<< HEAD
+{{ render_breadcrumbs([
+    {'url': url_for('cobranzas.list_fees'), 'text': 'Fees Management'},
+    {'text': 'Fee Details: ' + cuota.periodo}
+]) }}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h2 class="h4 mb-0"><i class="fas fa-file-alt me-2"></i>Fee Details: Periodo {{ cuota.periodo }}</h2>
+            <span class="badge bg-{{ 'success' if cuota.estado == 'paid' else 'warning' if cuota.estado in ['pending', 'partially_paid'] else 'danger' if cuota.estado == 'overdue' else 'secondary' }} fs-6 rounded-pill">{{ cuota.estado|title }}</span>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-user-tie me-1"></i> Professional Information</h5>
+=======
+<div class="container">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Fee Details: Periodo {{ cuota.periodo }}</h3>
+            <span class="badge bg-{{ 'success' if cuota.estado == 'paid' else 'warning' if cuota.estado in ['pending', 'partially_paid'] else 'danger' if cuota.estado == 'overdue' else 'secondary' }} fs-6">{{ cuota.estado|title }}</span>
+        </div>
+        <div class="card-body">
+            <h4>Professional Information</h4>
+            <div class="row mb-3">
+                <div class="col-md-6">
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
+                    <p><strong>Professional:</strong> 
+                        {% if cuota.professional %}
+                            <a href="{{ url_for('profesionales.detail_professional', professional_id=cuota.professional.id) }}">
+                                {{ cuota.professional.first_name }} {{ cuota.professional.last_name }}
+                            </a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                    <p><strong>Matrícula:</strong> {{ cuota.professional.matricula if cuota.professional else 'N/A' }}</p>
+                </div>
+            </div>
+
+            <h4>Fee Information</h4>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Periodo:</strong> {{ cuota.periodo }}</p>
+                    <p><strong>Monto Esperado:</strong> ${{ "%.2f"|format(cuota.monto_esperado) }}</p>
+                    <p><strong>Monto Pagado:</strong> ${{ "%.2f"|format(cuota.monto_pagado) }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Fecha Emisión:</strong> {{ cuota.fecha_emision.strftime('%Y-%m-%d') if cuota.fecha_emision else 'N/A' }}</p>
+                    <p><strong>Fecha Vencimiento:</strong> {{ cuota.fecha_vencimiento.strftime('%Y-%m-%d') if cuota.fecha_vencimiento else 'N/A' }}</p>
+                    <p><strong>Estado:</strong> {{ cuota.estado|title }}</p>
+                </div>
+            </div>
+
+            <h4>Associated Payments</h4>
+            {% if pagos %}
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha Pago</th>
+                        <th>Monto</th>
+                        <th>Método</th>
+                        <th>Referencia</th>
+                        <th>Confirmado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.fecha_pago.strftime('%Y-%m-%d %H:%M:%S') if pago.fecha_pago else 'N/A' }}</td>
+                        <td>${{ "%.2f"|format(pago.monto) }}</td>
+                        <td>{{ pago.metodo_pago|title }}</td>
+                        <td>{{ pago.referencia_pago or 'N/A' }}</td>
+                        <td>
+                            {% if pago.confirmado %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-warning">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pago.confirmado %} {# Only allow invoicing for confirmed payments #}
+                                {% if pago.factura %}
+                                    <a href="{{ url_for('facturacion.detail_invoice', factura_id=pago.factura.id) }}" class="btn btn-sm btn-outline-secondary" title="View Invoice {{ pago.factura.numero_factura }}"><i class="fas fa-file-invoice"></i></a>
+                                {% else %}
+                                    <a href="{{ url_for('facturacion.create_invoice_for_payment', pago_id=pago.id) }}" class="btn btn-sm btn-outline-primary" title="Generate Invoice"><i class="fas fa-file-invoice-dollar"></i></a>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info">No payments recorded for this fee yet.</div>
+            {% endif %}
+
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('cobranzas.list_fees') }}" class="btn btn-secondary">Back to Fees List</a>
+            {% if current_user.role.name in ['admin', 'staff'] and cuota.estado not in ['paid'] %}
+                <a href="{{ url_for('cobranzas.record_payment_for_cuota', cuota_id=cuota.id) }}" class="btn btn-primary">
+                    <i class="fas fa-dollar-sign"></i> Record Manual Payment
+                </a>
+            {% endif %}
+            {% if current_user.role.name == 'professional' and current_user.professional and current_user.professional.id == cuota.professional_id and cuota.estado not in ['paid'] %}
+                <a href="{{ url_for('cobranzas.initiate_online_payment', cuota_id=cuota.id) }}" class="btn btn-info">
+                    <i class="fab fa-mercadopago"></i> Pay Online with Mercado Pago
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

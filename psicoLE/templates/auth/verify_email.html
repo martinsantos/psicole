@@ -1,0 +1,84 @@
+{% extends "auth/base_auth.html" %}
+
+{% block title %}Verificar correo electrónico{% endblock %}
+
+{% block form_title %}Verifica tu correo electrónico{% endblock %}
+
+{% block content %}
+    <div class="text-center">
+        <div class="mb-4">
+            <i class="fas fa-envelope-open-text" style="font-size: 4rem; color: #4CAF50;"></i>
+        </div>
+        
+        {% if verified %}
+            <div class="alert alert-success">
+                <h4 class="alert-heading">¡Correo verificado con éxito!</h4>
+                <p class="mb-0">Tu dirección de correo electrónico ha sido verificada correctamente.</p>
+            </div>
+            
+            <div class="d-grid gap-2 mt-4">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+                </a>
+            </div>
+        {% else %}
+            {% if expired %}
+                <div class="alert alert-warning">
+                    <h4 class="alert-heading">¡Enlace expirado!</h4>
+                    <p>El enlace de verificación ha expirado o ya ha sido utilizado.</p>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <form method="POST" action="{{ url_for('auth.resend_verification') }}" class="mb-3">
+                        <input type="hidden" name="email" value="{{ email }}">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Reenviar enlace de verificación
+                        </button>
+                    </form>
+                    
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-link">
+                        Volver al inicio de sesión
+                    </a>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">Verificación pendiente</h4>
+                    <p>Hemos enviado un enlace de verificación a tu correo electrónico. Por favor, revisa tu bandeja de entrada y haz clic en el enlace para completar el proceso de verificación.</p>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">¿No recibiste el correo?</h5>
+                        <p class="card-text">Revisa tu carpeta de correo no deseado o solicita un nuevo enlace de verificación.</p>
+                        
+                        <form method="POST" action="{{ url_for('auth.resend_verification') }}">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Correo electrónico</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ email or '' }}" required 
+                                           placeholder="tucorreo@ejemplo.com">
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Reenviar enlace
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block auth_footer %}
+    {% if not verified %}
+        <p class="mb-0">¿Necesitas ayuda? <a href="{{ url_for('main.contact') }}">Contáctanos</a></p>
+    {% endif %}
+{% endblock %}

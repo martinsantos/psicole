@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Cambio de Correo - PsicoLE</title>
+    <style type="text/css">
+        /* Base styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+        }
+        
+        /* Container */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header */
+        .email-header {
+            background-color: #0d6efd;
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+        
+        .email-header img {
+            max-width: 150px;
+            height: auto;
+        }
+        
+        .email-header h1 {
+            margin: 15px 0 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        /* Content */
+        .email-content {
+            padding: 30px;
+        }
+        
+        .email-content h2 {
+            color: #0d6efd;
+            margin-top: 0;
+            font-size: 22px;
+        }
+        
+        .email-content p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555555;
+        }
+        
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        /* Button */
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #0d6efd;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #0d6efd;
+            color: #0d6efd !important;
+        }
+        
+        .btn:hover {
+            background-color: #0b5ed7;
+        }
+        
+        .btn-outline:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Footer */
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .email-footer p {
+            margin: 5px 0;
+        }
+        
+        .email-footer a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        
+        .email-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                border-radius: 0;
+            }
+            
+            .email-content, .email-footer {
+                padding: 20px 15px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <img src="{{ url_for('static', filename='img/logo-white.png', _external=True) }}" alt="PsicoLE">
+            <h1>Confirmar Cambio de Correo</h1>
+        </div>
+        
+        <!-- Content -->
+        <div class="email-content">
+            <h2>Hola {{ user.username }},</h2>
+            
+            <p>Hemos recibido una solicitud para cambiar el correo electrónico asociado a tu cuenta de PsicoLE.</p>
+            
+            <div class="info-box">
+                <p style="margin: 0;">
+                    <strong>Correo actual:</strong> {{ current_email }}<br>
+                    <strong>Nuevo correo:</strong> {{ new_email }}
+                </p>
+            </div>
+            
+            <p>Para confirmar este cambio, por favor haz clic en el siguiente botón:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ confirmation_link }}" class="btn">Confirmar Cambio de Correo</a>
+            </div>
+            
+            <p>O copia y pega el siguiente enlace en tu navegador:</p>
+            <p style="word-break: break-all; color: #0d6efd; font-size: 14px;">{{ confirmation_link }}</p>
+            
+            <p>Si no solicitaste este cambio, por favor ignora este correo o <a href="{{ url_for('auth.contact', _external=True) }}">contáctanos</a> de inmediato.</p>
+            
+            <p>Este enlace expirará en {{ expire_hours }} horas por razones de seguridad.</p>
+            
+            <p>Saludos cordiales,<br>El equipo de PsicoLE</p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="email-footer">
+            <p>© {{ now.year }} PsicoLE. Todos los derechos reservados.</p>
+            <p>
+                <a href="{{ url_for('main.index', _external=True) }}">Inicio</a> | 
+                <a href="#">Términos de servicio</a> | 
+                <a href="#">Política de privacidad</a>
+            </p>
+            <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+        </div>
+    </div>
+</body>
+</html>
