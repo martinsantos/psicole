@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, current_app
 from flask_login import login_required, current_user
-from app import db
+from auth import db
 from auth.models import User, Role
 
 # Create a Blueprint for test routes

@@ -1,14 +1,56 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
-from flask_login import current_user
-from psicoLE.database import db
-from psicoLE.auth.decorators import roles_required
-from psicoLE.autogestion.models import DataChangeRequest
-from psicoLE.profesionales.models import Professional
-from datetime import datetime
+from flask import render_template, flash, redirect, url_for, request, current_app
+from flask_login import current_user, login_required
+from datetime import datetime, timedelta
+from . import admin_bp as admin_dashboard_bp
+from auth.models import db, User, Role
+from auth.decorators import roles_required
 
-admin_dashboard_bp = Blueprint('admin_dashboard', __name__,
-                               template_folder='templates/admin_dashboard',
-                               url_prefix='/admin') # Common prefix for admin tasks
+# Import models with error handling
+try:
+    from profesionales.models import Professional
+except ImportError:
+    Professional = None
+
+try:
+    from payments.models import Payment
+except ImportError:
+    Payment = None
+
+try:
+    from autogestion.models import DataChangeRequest
+except ImportError:
+    DataChangeRequest = None
+
+@admin_dashboard_bp.route('/')
+@login_required
+@roles_required('admin', 'staff')
+def dashboard():
+    # Initialize stats with default values
+    stats = {
+        'total_users': User.query.count(),
+        'admin_users': User.query.join(Role).filter(Role.name == 'admin').count(),
+        'staff_users': User.query.join(Role).filter(Role.name == 'staff').count(),
+        'professional_users': User.query.join(Role).filter(Role.name == 'professional').count()
+    }
+    
+    # Add additional stats if models are available
+    if Professional:
+        stats['active_professionals'] = Professional.query.filter_by(is_active=True).count()
+    
+    if DataChangeRequest:
+        stats['pending_data_changes'] = DataChangeRequest.query.filter_by(status='pending').count()
+    
+    if Payment:
+        stats['pending_payments'] = Payment.query.filter_by(status='pending').count()
+        stats['total_earnings'] = sum(p.amount for p in Payment.query.filter_by(status='completed').all())
+    
+    # Get recent users
+    recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
+    
+    return render_template('admin_dashboard/dashboard.html',
+                         title='Panel de Administración',
+                         stats=stats,
+                         recent_users=recent_users)
 
 @admin_dashboard_bp.route('/data-changes/pending')
 @roles_required('admin', 'staff')
@@ -17,9 +59,9 @@ def list_pending_data_changes():
                                             .join(DataChangeRequest.professional) \
                                             .order_by(DataChangeRequest.requested_at.asc()) \
                                             .all()
-    return render_template('list_pending_data_changes.html', 
-                           requests=pending_requests, 
-                           title='Pending Data Change Requests')
+    return render_template('admin_dashboard/list_pending_data_changes.html', 
+                         requests=pending_requests, 
+                         title='Solicitudes de Cambio de Datos Pendientes')
 
 @admin_dashboard_bp.route('/data-changes/<int:request_id>/review', methods=['GET', 'POST'])
 @roles_required('admin', 'staff')
@@ -28,7 +70,7 @@ def review_data_change(request_id):
     professional = change_request.professional
 
     if request.method == 'POST':
-        action = request.form.get('action') # 'approve' or 'reject'
+        action = request.form.get('action')  # 'approve' or 'reject'
         review_comments = request.form.get('review_comments', None)
 
         if action == 'approve':
@@ -76,32 +118,30 @@ def review_data_change(request_id):
                            title='Review Data Change Request')
 
 # View for Admin/Staff to download any professional's document
-from psicoLE.autogestion.models import DocumentoProfesional # Already imported if DataChangeRequest is here, but good for clarity
-from flask import send_from_directory, current_app as app, abort # For file serving
+from flask import send_from_directory, abort
 import os
 
 @admin_dashboard_bp.route('/documents/<int:document_id>/download')
 @roles_required('admin', 'staff')
 def download_professional_document_admin(document_id):
     document = DocumentoProfesional.query.get_or_404(document_id)
-    # No ownership check needed for admin/staff
     
-    directory = os.path.join(app.config['UPLOAD_FOLDER'], str(document.professional_id))
-    filename = document.archivo_filename
+    # Verify the file exists
+    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], document.storage_path)
+    if not os.path.exists(file_path):
+        abort(404, "El archivo solicitado no existe.")
     
-    try:
-        return send_from_directory(directory, filename, as_attachment=True)
-    except FileNotFoundError:
-        flash('File not found. It might have been moved or deleted.', 'danger')
-        print(f"Admin Download Error: File not found at path: {os.path.join(directory, filename)}")
-        abort(404)
-    except Exception as e:
-        flash(f'Error downloading file: {str(e)}', 'danger')
-        print(f"Admin Download Error for file {filename}: {e}")
-        # Redirect to professional detail page or a generic error page
-        return redirect(url_for('profesionales.detail_professional', professional_id=document.professional_id))
+    # Determine the download name (original filename or generate one)
+    download_name = document.original_filename or f"documento_{document.id}{os.path.splitext(document.storage_path)[1]}"
+    
+    return send_from_directory(
+        os.path.dirname(file_path),
+        os.path.basename(file_path),
+        as_attachment=True,
+        download_name=download_name
+    )
 
-@admin_dashboard_bp.route('/dashboard')
+@admin_dashboard_bp.route('/admin/dashboard')
 @roles_required('admin', 'staff')
 def admin_dashboard_main():
     # Key Statistics

@@ -1,0 +1,187 @@
+{% extends "auth/base_auth.html" %}
+
+{% block title %}Registro{% endblock %}
+
+{% block form_title %}Crear una cuenta{% endblock %}
+{% block form_subtitle %}Únete a nuestra comunidad{% endblock %}
+
+{% block content %}
+    <form method="POST" action="{{ url_for('auth.register') }}" class="needs-validation" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <!-- Username Field -->
+        <div class="mb-3">
+            {{ form.username.label(class="form-label") }}
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-user"></i>
+                </span>
+                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), 
+                              placeholder="Elige un nombre de usuario") }}
+                {% for error in form.username.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="form-text">Puedes usar letras, números y guiones bajos.</div>
+        </div>
+        
+        <!-- Email Field -->
+        <div class="mb-3">
+            {{ form.email.label(class="form-label") }}
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-envelope"></i>
+                </span>
+                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), 
+                            placeholder="tucorreo@ejemplo.com") }}
+                {% for error in form.email.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="form-text">Nunca compartiremos tu correo electrónico con nadie más.</div>
+        </div>
+        
+        <!-- Password Field -->
+        <div class="mb-3">
+            {{ form.password.label(class="form-label") }}
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-lock"></i>
+                </span>
+                {{ form.password(
+                    class="form-control" + (" is-invalid" if form.password.errors else ""),
+                    placeholder="Crea una contraseña segura",
+                    **{'aria-describedby': 'password-strength-text'}
+                ) }}
+                <button class="btn btn-outline-secondary toggle-password" type="button"
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        title="Mostrar/ocultar contraseña"
+                        onclick="togglePassword('{{ form.password.id }}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                {% for error in form.password.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <!-- Password strength meter will be inserted here by base_auth.html -->
+        </div>
+        
+        <!-- Confirm Password -->
+        <div class="mb-3">
+            {{ form.confirm_password.label(class="form-label") }}
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-lock"></i>
+                </span>
+                {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), 
+                                       placeholder="Vuelve a escribir la contraseña") }}
+                <button class="btn btn-outline-secondary toggle-password" type="button"
+                        onclick="togglePassword('{{ form.confirm_password.id }}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                {% for error in form.confirm_password.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Terms and Conditions -->
+        <div class="mb-4 form-check">
+            {{ form.accept_tos(class="form-check-input" + (" is-invalid" if form.accept_tos.errors else "")) }}
+            {{ form.accept_tos.label(class="form-check-label") }}
+            {% for error in form.accept_tos.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="d-grid gap-2 mt-4">
+            <button type="submit" class="btn btn-primary btn-lg" id="register-button">
+                <i class="fas fa-user-plus me-2"></i>Crear cuenta
+            </button>
+        </div>
+        
+        <!-- Social Sign Up -->
+        <div class="text-center my-3">
+            <div class="position-relative">
+                <hr class="my-4">
+                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">O regístrate con</span>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('auth.oauth_authorize', provider='google') }}" class="btn btn-outline-danger">
+                    <i class="fab fa-google me-2"></i>Google
+                </a>
+                <a href="{{ url_for('auth.oauth_authorize', provider='facebook') }}" class="btn btn-outline-primary">
+                    <i class="fab fa-facebook-f me-2"></i>Facebook
+                </a>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block auth_footer %}
+    <p class="mb-0">¿Ya tienes una cuenta? <a href="{{ url_for('auth.login') }}">Inicia sesión</a></p>
+    <p class="mb-0">Al registrarte, aceptas nuestros <a href="{{ url_for('main.terms') }}">Términos de servicio</a> y <a href="{{ url_for('main.privacy') }}">Política de privacidad</a>.</p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle password visibility
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = document.querySelector(`button[onclick="togglePassword('${inputId}')"] i`);
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+    
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Show password strength meter when password field is focused
+        const passwordInput = document.getElementById('{{ form.password.id }}');
+        const passwordStrengthContainer = document.getElementById('password-strength-container');
+        
+        if (passwordInput && passwordStrengthContainer) {
+            passwordInput.addEventListener('focus', function() {
+                passwordStrengthContainer.classList.remove('d-none');
+            });
+            
+            // Hide when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== passwordInput && !passwordStrengthContainer.contains(e.target) && !passwordInput.value) {
+                    passwordStrengthContainer.classList.add('d-none');
+                }
+            });
+        }
+        
+        // Check password match on form submission
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const password = document.getElementById('{{ form.password.id }}');
+                const confirmPassword = document.getElementById('{{ form.confirm_password.id }}');
+                
+                if (password && confirmPassword && password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    confirmPassword.setCustomValidity('Las contraseñas no coinciden');
+                    confirmPassword.reportValidity();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

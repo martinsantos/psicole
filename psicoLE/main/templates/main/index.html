@@ -16,8 +16,13 @@
                 </div>
             {% else %}
                 <div class="mt-4">
+                    {% if message %}
+                        <div class="alert alert-info">
+                            {{ message }}
+                        </div>
+                    {% endif %}
                     <p>¡Hola, {{ current_user.username }}!</p>
-                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">Ir al Panel de Control</a>
+                    <a href="{{ url_for('main.dashboard_redirect') }}" class="btn btn-primary btn-lg">Ir al Panel de Control</a>
                 </div>
             {% endif %}
         </div>

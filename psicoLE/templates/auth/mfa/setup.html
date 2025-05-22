@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Configurar autenticación en dos pasos</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Para configurar la autenticación en dos pasos, sigue estos pasos:
+                    </p>
+                    
+                    <ol class="mb-4">
+                        <li class="mb-2">
+                            Descarga una aplicación de autenticación como Google Authenticator, 
+                            Microsoft Authenticator o Authy en tu dispositivo móvil.
+                        </li>
+                        <li class="mb-2">
+                            Escanea el código QR con tu aplicación o ingresa manualmente la siguiente clave secreta:
+                            <div class="input-group mt-2 mb-3">
+                                <input type="text" class="form-control font-monospace" id="secret-key" value="{{ secret }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="copy-secret" data-bs-toggle="tooltip" title="Copiar al portapapeles">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </li>
+                        <li>
+                            Ingresa el código de verificación de 6 dígitos generado por tu aplicación:
+                        </li>
+                    </ol>
+
+                    <div class="d-flex justify-content-center my-4">
+                        {{ qr_code_svg|safe }}
+                    </div>
+
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.code.label(class="form-label") }}
+                            {{ form.code(class="form-control form-control-lg text-center" + (' is-invalid' if form.code.errors else ''), 
+                                      autocomplete="one-time-code", inputmode="numeric", pattern="\d{6}", 
+                                      placeholder="123456") }}
+                            {% if form.code.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="form-text">Ingresa el código de 6 dígitos de tu aplicación de autenticación.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('account.settings') }}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card border-warning mt-4">
+                <div class="card-header bg-warning bg-opacity-25">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        Información importante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <i class="bi bi-shield-lock-fill text-primary"></i>
+                        La autenticación en dos pasos añade una capa adicional de seguridad a tu cuenta.
+                    </p>
+                    <p class="card-text">
+                        <i class="bi bi-phone-fill text-primary"></i>
+                        Necesitarás tu teléfono cada vez que inicies sesión desde un dispositivo nuevo.
+                    </p>
+                    <p class="card-text">
+                        <i class="bi bi-key-fill text-primary"></i>
+                        Guarda tus códigos de respaldo en un lugar seguro. Los necesitarás si pierdes acceso a tu dispositivo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Enable tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Copy secret key to clipboard
+    document.getElementById('copy-secret').addEventListener('click', function() {
+        var copyText = document.getElementById('secret-key');
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            // Copy the text inside the text field
+            navigator.clipboard.writeText(copyText.value).then(function() {
+                // Change button text temporarily
+                var originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check"></i> Copiado!';
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-success');
+                
+                // Revert button text after 2 seconds
+                var button = this;
+                setTimeout(function() {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+            }.bind(this));
+        } catch (err) {
+            console.error('Error al copiar: ', err);
+            
+            // Fallback for browsers that don't support clipboard API
+            document.execCommand('copy');
+            
+            // Change button text temporarily
+            var originalText = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-check"></i> Copiado!';
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-success');
+            
+            // Revert button text after 2 seconds
+            var button = this;
+            setTimeout(function() {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        }
+    });
+    
+    // Auto-submit form when 6 digits are entered
+    document.getElementById('{{ form.code.id }}').addEventListener('input', function(e) {
+        if (this.value.length === 6) {
+            this.form.submit();
+        }
+    });
+</script>
+{% endblock %}

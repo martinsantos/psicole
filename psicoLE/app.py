@@ -1,12 +1,10 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
 from dotenv import load_dotenv
 
 # Initialize extensions
-db = SQLAlchemy()
 mail = Mail()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -65,111 +63,77 @@ def create_app(config=None):
         MAIL_USE_TLS=os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true',
         MAIL_USERNAME=os.environ.get('MAIL_USERNAME', ''),
         MAIL_PASSWORD=os.environ.get('MAIL_PASSWORD', ''),
-        MAIL_DEFAULT_SENDER=os.environ.get('MAIL_DEFAULT_SENDER', ''),
         # File uploads
         UPLOAD_FOLDER=os.path.join('instance', 'uploads'),
         ALLOWED_EXTENSIONS={'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'}
     )
     
-    # Override with any custom config passed in
-    if config is not None:
-        app.config.update(config)
+    # Load configuration from config.py if it exists
+    if config is None:
+        app.config.from_pyfile('config.py', silent=True)
+    else:
+        app.config.from_mapping(config)
     
-    # Ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path, exist_ok=True)
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    except OSError as e:
-        print(f"Error creating instance/upload folders: {e}")
+    # Ensure the SECRET_KEY is set
+    if 'SECRET_KEY' not in app.config:
+        app.config['SECRET_KEY'] = os.urandom(24).hex()
     
-    # Initialize extensions with app
-    db.init_app(app)
-    mail.init_app(app)
-    login_manager.init_app(app)
+    # Configure database
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Register blueprints
-    register_blueprints(app)
+    # Configure email settings
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
     
+    # Import the auth blueprint and initialize it
+    from auth import init_app as init_auth, db as auth_db
+    
+    # Initialize the auth extension with the app
+    init_auth(app)
+    
+    # Make the database available in the app context
+    app.extensions['sqlalchemy'] = {'db': auth_db, 'Model': auth_db.Model}
+    
+    # Register blueprints (except auth which is already registered by init_auth)
+    register_blueprints(app, skip_auth=True)
+    
+    # Create admin user if it doesn't exist
     with app.app_context():
         try:
-            # Import models here to avoid circular imports
+            from auth import db as auth_db
             from auth.models import User, Role
             
-            # Create database tables first
-            db.create_all()
-            
-            # Now set up relationships if they don't exist
-            if not hasattr(User, 'reviewed_data_changes'):
-                try:
-                    from autogestion.models import DataChangeRequest
-                    User.reviewed_data_changes = db.relationship(
-                        'DataChangeRequest',
-                        foreign_keys='DataChangeRequest.reviewer_id',
-                        backref=db.backref('reviewer', lazy='joined'),
-                        lazy='dynamic'
-                    )
-                except Exception as e:
-                    print(f"Warning: Could not set up User.reviewed_data_changes: {e}")
-            
-            # Set up Professional relationships if the model exists
-            try:
-                from profesionales.models import Professional
+            # Get or create admin role
+            admin_role = Role.query.filter_by(name='admin').first()
+            if not admin_role:
+                admin_role = Role(name='admin')
+                auth_db.session.add(admin_role)
+                auth_db.session.commit()
                 
-                # Only set up relationships if they don't exist
-                if not hasattr(Professional, 'data_change_requests'):
-                    try:
-                        Professional.data_change_requests = db.relationship(
-                            'DataChangeRequest',
-                            foreign_keys='DataChangeRequest.professional_id',
-                            backref=db.backref('professional_assoc', lazy='joined'),
-                            lazy='dynamic',
-                            order_by='DataChangeRequest.requested_at.desc()'
-                        )
-                    except Exception as e:
-                        print(f"Warning: Could not set up Professional.data_change_requests: {e}")
+            # Create admin user if it doesn't exist
+            admin_user = User.query.filter_by(username='admin').first()
+            if not admin_user:
+                admin_user = User(
+                    username='admin',
+                    email='admin@example.com',
+                    role_id=admin_role.id,
+                    is_verified=True
+                )
+                admin_user.set_password('admin123')
+                auth_db.session.add(admin_user)
+                auth_db.session.commit()
+                print("Created default admin user with username: admin, password: admin123")
                 
-                if not hasattr(Professional, 'documentos'):
-                    try:
-                        from autogestion.models import DocumentoProfesional
-                        Professional.documentos = db.relationship(
-                            'DocumentoProfesional',
-                            backref=db.backref('professional_doc', lazy='joined'),
-                            lazy='dynamic',
-                            order_by='DocumentoProfesional.fecha_carga.desc()',
-                            cascade="all, delete-orphan"
-                        )
-                    except Exception as e:
-                        print(f"Warning: Could not set up Professional.documentos: {e}")
-                        
-            except ImportError:
-                print("Warning: Professional model not found, skipping relationship setup")
-            
         except Exception as e:
-            print(f"Error during app initialization: {e}")
-            raise
-        
-        # Import models after db is initialized to avoid circular imports
-        from auth.models import User, Role
-        
-        # Create default roles and admin user if they don't exist
-        admin_role = Role.query.filter_by(name='admin').first()
-        if not admin_role:
-            admin_role = Role(name='admin')
-            db.session.add(admin_role)
-            db.session.commit()
-            
-        # Create admin user if it doesn't exist
-        admin_user = User.query.filter_by(username='admin').first()
-        if not admin_user:
-            admin_user = User(
-                username='admin',
-                email='admin@example.com',
-                role_id=admin_role.id
-            )
-            admin_user.set_password('admin123')
-            db.session.add(admin_user)
-            db.session.commit()
-            print("Created default admin user with username: admin, password: admin123")
+            print(f"Error initializing admin user: {e}")
+            if 'auth_db' in locals() and hasattr(auth_db.session, 'rollback'):
+                auth_db.session.rollback()
+            # Don't raise here to allow the app to start even if admin creation fails
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -187,46 +151,47 @@ def create_app(config=None):
     
     return app
 
-def register_blueprints(app):
-    """Register all blueprints"""
-    # Import blueprints here to avoid circular imports
-    from auth.views import auth_bp
-    from main import main_bp
-    
-    # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(main_bp)
-    
-    # Other blueprints (lazy loading)
-    blueprints = [
-        ('.profesionales.views', 'profesionales_bp', '/profesionales'),
-        ('.cobranzas.views', 'cobranzas_bp', '/cobranzas'),
-        ('.facturacion.views', 'facturacion_bp', '/facturacion'),
-        ('.configuraciones.views', 'configuraciones_bp', '/configuraciones'),
-        ('.autogestion.views', 'autogestion_bp', '/autogestion'),
-        ('.admin_dashboard.views', 'admin_dashboard_bp', '/admin'),
-        ('.reports.views', 'reports_bp', '/reports')
-    ]
-    
-    for module_path, bp_name, url_prefix in blueprints:
-        try:
-            # Try relative import first
+def register_blueprints(app, skip_auth=False):
+    """Register all blueprints with the Flask application."""
+    try:
+        if not skip_auth:
             try:
-                module = __import__(f'psicoLE{module_path}', fromlist=[bp_name])
-            except ImportError:
-                # Fall back to direct import
-                module = __import__(module_path.lstrip('.'), fromlist=[bp_name])
-                
-            bp = getattr(module, bp_name, None)
-            if bp is not None:
-                if hasattr(bp, 'url_prefix'):
-                    app.register_blueprint(bp)
-                else:
-                    app.register_blueprint(bp, url_prefix=url_prefix)
-        except ImportError as e:
-            print(f"Warning: Could not import {bp_name} from {module_path}: {e}")
+                from auth import auth_bp
+                app.register_blueprint(auth_bp, url_prefix='/auth')
+                app.logger.info("Registered auth blueprint")
+            except Exception as e:
+                app.logger.error(f"Failed to register auth blueprint: {str(e)}")
+                raise
+        try:
+            from main import main_bp
+            app.register_blueprint(main_bp)
+            app.logger.info("Registered main blueprint")
         except Exception as e:
-            print(f"Error registering {bp_name}: {e}")
+            app.logger.error(f"Failed to register main blueprint: {str(e)}")
+            raise
+            
+        try:
+            from profesionales.views import profesionales_bp
+            app.register_blueprint(profesionales_bp, url_prefix='/profesionales')
+            app.logger.info("Registered profesionales blueprint")
+        except ImportError:
+            app.logger.warning("Profesionales blueprint not found, skipping...")
+        except Exception as e:
+            app.logger.error(f"Failed to register profesionales blueprint: {str(e)}")
+            
+        try:
+            from admin_dashboard import init_app as init_admin_dashboard
+            init_admin_dashboard(app)
+            app.logger.info("Initialized admin dashboard")
+        except ImportError as e:
+            app.logger.warning(f"Admin dashboard not found, skipping... {str(e)}")
+        except Exception as e:
+            app.logger.error(f"Failed to initialize admin dashboard: {str(e)}", exc_info=True)
+        
+        return True
+    except Exception as e:
+        app.logger.error(f"Error registering blueprints: {str(e)}", exc_info=True)
+        return False
 
 # Load environment variables
 load_dotenv()
