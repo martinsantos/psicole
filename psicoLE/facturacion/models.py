@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Numeric, Date, Text, JSON
 from sqlalchemy.orm import relationship
-from psicoLE.database import db
+from database import db
 from datetime import date as dt_date # Renamed to avoid conflict with model field
 
 class Factura(db.Model):

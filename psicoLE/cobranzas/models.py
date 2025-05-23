@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Numeric, Date, DateTime, Boolean
 from sqlalchemy.orm import relationship
-from psicoLE.database import db
+from database import db
 from datetime import datetime
 from decimal import Decimal
 

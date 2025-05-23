@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import after setting up the path
-from psicoLE.database import db
+from database import db
 from psicoLE.auth.models import User, Role
 from psicoLE.main import app  # Import the app instance
 

@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import date
-from psicoLE.database import db
+from database import db
 from psicoLE.profesionales.models import Professional
 from .models import Cuota
 from sqlalchemy.exc import SQLAlchemyError

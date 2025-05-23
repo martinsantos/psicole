@@ -1,5 +1,5 @@
 from flask import Flask, session # Added session
-from psicoLE.database import db # Import the shared db instance
+from database import db # Import the shared db instance
 from flask_login import LoginManager # Added LoginManager
 
 # Import models to ensure they are registered with SQLAlchemy's metadata

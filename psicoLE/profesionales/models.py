@@ -1,4 +1,4 @@
-from psicoLE.database import db # Corrected import
+from database import db # Corrected import
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
 # Ensure User model is imported if it's referenced by Professional model for relationships

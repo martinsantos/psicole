@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from psicoLE.database import db
+from database import db
 from .models import Configuration
 from .forms import ConfigurationForm
 from psicoLE.auth.decorators import roles_required

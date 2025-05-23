@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash
 # Add the current directory to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from psicoLE.database import db
+from database import db
 from psicoLE.auth.models import User, Role
 
 def create_admin_user():

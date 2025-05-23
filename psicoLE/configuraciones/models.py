@@ -1,4 +1,4 @@
-from psicoLE.database import db # Corrected import
+from database import db # Corrected import
 from sqlalchemy import Column, Integer, String, Text
 
 class Configuration(db.Model):

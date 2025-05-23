@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from psicoLE.database import db
+from database import db
 from psicoLE.auth.decorators import roles_required
 from .forms import DateRangeForm, PaymentReportFiltersForm, ProfessionalReportForm
 from psicoLE.cobranzas.models import Cuota, Pago

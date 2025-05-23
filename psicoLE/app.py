@@ -2,13 +2,18 @@ import os
 from flask import Flask
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_migrate import Migrate
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Initialize extensions
 mail = Mail()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
+
+# Initialize Migrate without db (will be initialized in create_app)
+migrate = Migrate()
 
 def create_app(config=None):
     """Application factory function"""
@@ -29,6 +34,10 @@ def create_app(config=None):
     # Set the database path
     db_path = data_dir / 'psicole.db'
     db_uri = f'sqlite:///{db_path}'
+    
+    # Configure SQLAlchemy
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Ensure the data directory is writable
     try:
@@ -90,14 +99,38 @@ def create_app(config=None):
     app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
     app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
     
-    # Import the auth blueprint and initialize it
-    from auth import init_app as init_auth, db as auth_db
+    # Initialize database
+    from database import db
+    db.init_app(app)
     
-    # Initialize the auth extension with the app
-    init_auth(app)
+    # Ensure migrations directory exists
+    migrations_dir = data_dir / 'migrations'
+    migrations_dir.mkdir(exist_ok=True, mode=0o755)
     
-    # Make the database available in the app context
-    app.extensions['sqlalchemy'] = {'db': auth_db, 'Model': auth_db.Model}
+    # Initialize Flask-Migrate
+    migrate.init_app(app, db, directory=str(migrations_dir))
+    
+    # Initialize extensions with app
+    login_manager.init_app(app)
+    mail.init_app(app)
+    
+    # Import and register blueprints
+    from auth import auth_bp, init_app as init_auth
+    
+    # Initialize auth with app and pass the db instance
+    init_auth(app, db)
+    
+    # Set up the database in the app context
+    with app.app_context():
+        # Make sure the database is properly set up
+        app.extensions['sqlalchemy'] = {'db': db, 'Model': db.Model}
+        
+        # Create tables if they don't exist
+        try:
+            db.create_all()
+            print("Database tables created/verified.")
+        except Exception as e:
+            print(f"Error creating database tables: {e}")
     
     # Register blueprints (except auth which is already registered by init_auth)
     register_blueprints(app, skip_auth=True)

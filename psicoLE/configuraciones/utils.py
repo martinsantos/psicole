@@ -1,5 +1,5 @@
 from .models import Configuration
-from psicoLE.database import db # To handle potential app context issues if called early
+from database import db # To handle potential app context issues if called early
 
 def get_config_value(key, default=None):
     """

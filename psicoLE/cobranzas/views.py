@@ -1,6 +1,16 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from psicoLE.database import db
+from .models import Cuota, Pago
+from psicoLE.profesionales.models import Professional
+from .forms import GenerateFeesForm, FeeFilterForm, AutomaticDebitListFilterForm
+from .services import generate_monthly_fees, update_fee_status_after_payment
+from .services import create_mercadopago_preference
+from psicoLE.auth.decorators import roles_required
+from decimal import Decimal, InvalidOperation
+from datetime import date, datetime
+import io
+import csv
+from database import db
 from .models import Cuota, Pago
 from psicoLE.profesionales.models import Professional # Added for joining
 from .forms import GenerateFeesForm, FeeFilterForm, AutomaticDebitListFilterForm # Added new form

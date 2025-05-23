@@ -1,5 +1,5 @@
 from psicoLE.configuraciones.utils import get_config_value, set_config_value
-from psicoLE.database import db
+from database import db
 from .models import Factura # To check if an invoice number already exists, just in case
 from sqlalchemy import func
 from datetime import date

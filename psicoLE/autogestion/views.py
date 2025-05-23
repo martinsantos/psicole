@@ -4,7 +4,7 @@ from psicoLE.auth.decorators import roles_required
 from psicoLE.profesionales.models import Professional
 from psicoLE.cobranzas.models import Cuota, Pago
 from psicoLE.facturacion.models import Factura
-from psicoLE.database import db # For potential direct queries if needed, though relationships are preferred
+from database import db # For potential direct queries if needed, though relationships are preferred
 
 autogestion_bp = Blueprint('autogestion', __name__,
                            template_folder='templates/autogestion',

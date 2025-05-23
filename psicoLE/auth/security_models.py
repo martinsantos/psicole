@@ -1,29 +1,96 @@
 from datetime import datetime, timedelta
-from . import db
+from sqlalchemy.orm import relationship, backref
+from database import db  # Importación absoluta
 
-# Association Tables
-user_roles = db.Table('user_roles',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
-    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
-)
+"""Security models for the authentication system.
 
-user_groups = db.Table('user_groups',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True),
-    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
-)
+This module defines the security-related models for the application,
+including user roles, permissions, and security events.
+"""
 
-user_permissions = db.Table('user_permissions',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True),
-    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
-)
+from datetime import datetime, timedelta
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Text, JSON, Table
+from sqlalchemy.orm import relationship, backref
+from database import db  # Importación absoluta
+
+# Initialize tables as None - will be set by create_association_tables()
+user_roles = None
+user_groups = None
+user_permissions = None
+group_permissions = None
+
+# Association tables will be created after all models are defined
+token_blacklist = None
+password_history = None
+failed_login_attempts = None
+security_questions = None
+user_consents = None
+user_devices = None
+user_activities = None
+user_notifications = None
+user_preferences = None
+groups = None
+permissions = None
+
+def create_association_tables():
+    """Crea las tablas de asociación después de que los modelos estén definidos."""
+    global user_roles, user_groups, user_permissions, group_permissions
+    
+    # Tabla de asociación para usuarios y roles
+    user_roles = db.Table('user_roles',
+        db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('role_id', db.Integer, db.ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('assigned_at', db.DateTime, default=datetime.utcnow, nullable=False),
+        db.Column('assigned_by', db.Integer, db.ForeignKey('users.id', ondelete='SET NULL')),
+        db.Column('expires_at', db.DateTime, nullable=True),
+        db.Column('is_active', db.Boolean, default=True, nullable=False)
+    )
+    
+    # Tabla de asociación para usuarios y grupos
+    user_groups = db.Table('user_groups',
+        db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('group_id', db.Integer, db.ForeignKey('groups.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('assigned_at', db.DateTime, default=datetime.utcnow, nullable=False),
+        db.Column('assigned_by', db.Integer, db.ForeignKey('users.id', ondelete='SET NULL')),
+        db.Column('expires_at', db.DateTime, nullable=True),
+        db.Column('is_active', db.Boolean, default=True, nullable=False)
+    )
+    
+    # Tabla de asociación para usuarios y permisos directos
+    user_permissions = db.Table('user_permissions',
+        db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('granted_at', db.DateTime, default=datetime.utcnow, nullable=False),
+        db.Column('granted_by', db.Integer, db.ForeignKey('users.id', ondelete='SET NULL')),
+        db.Column('expires_at', db.DateTime, nullable=True),
+        db.Column('is_active', db.Boolean, default=True, nullable=False)
+    )
+    
+    # Tabla de asociación para grupos y permisos
+    group_permissions = db.Table('group_permissions',
+        db.Column('group_id', db.Integer, db.ForeignKey('groups.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+        db.Column('granted_at', db.DateTime, default=datetime.utcnow, nullable=False),
+        db.Column('granted_by', db.Integer, db.ForeignKey('users.id', ondelete='SET NULL')),
+        db.Column('expires_at', db.DateTime, nullable=True),
+        db.Column('is_active', db.Boolean, default=True, nullable=False)
+    )
+    
+    return user_roles, user_groups, user_permissions, group_permissions
+
+# Inicializar las tablas como None
+user_roles = None
+user_groups = None
+user_permissions = None
+group_permissions = None
 
 # Models
 class TokenBlacklist(db.Model):
     """Track invalidated authentication tokens."""
     __tablename__ = 'token_blacklist'
+    
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
     
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(36), nullable=False, index=True)
@@ -39,6 +106,9 @@ class PasswordHistory(db.Model):
     """Store password history to prevent password reuse."""
     __tablename__ = 'password_history'
     
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
@@ -50,6 +120,9 @@ class PasswordHistory(db.Model):
 class FailedLoginAttempt(db.Model):
     """Track failed login attempts for security monitoring."""
     __tablename__ = 'failed_login_attempts'
+    
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -64,6 +137,10 @@ class SecurityQuestion(db.Model):
     """Security questions for account recovery."""
     __tablename__ = 'security_questions'
     
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
+    user_answers = None  # Will be set in init_models
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     question = db.Column(db.String(255), nullable=False)
@@ -76,6 +153,9 @@ class SecurityQuestion(db.Model):
 class UserConsent(db.Model):
     """Track user consents (GDPR, terms of service, etc.)."""
     __tablename__ = 'user_consents'
+    
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -91,6 +171,9 @@ class UserConsent(db.Model):
 class UserDevice(db.Model):
     """Track user devices for device recognition."""
     __tablename__ = 'user_devices'
+    
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -110,6 +193,9 @@ class UserActivity(db.Model):
     """Track user activities for analytics and security."""
     __tablename__ = 'user_activities'
     
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     activity_type = db.Column(db.String(50), nullable=False, index=True)
@@ -124,6 +210,9 @@ class UserActivity(db.Model):
 class UserNotification(db.Model):
     """User notifications."""
     __tablename__ = 'user_notifications'
+    
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -141,6 +230,9 @@ class UserNotification(db.Model):
 class UserPreference(db.Model):
     """User preferences and settings."""
     __tablename__ = 'user_preferences'
+    
+    # Relationships will be set up in init_models
+    user = None  # Will be set in init_models
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -160,6 +252,10 @@ class Group(db.Model):
     """User groups for group-based access control."""
     __tablename__ = 'groups'
     
+    # Relationships will be set up in init_models
+    users = None  # Will be set in init_models
+    permissions = None  # Will be set in init_models
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text)
@@ -173,6 +269,10 @@ class Permission(db.Model):
     """Permissions for fine-grained access control."""
     __tablename__ = 'permissions'
     
+    # Relationships will be set up in init_models
+    users = None  # Will be set in init_models
+    groups = None  # Will be set in init_models
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text)
@@ -183,8 +283,5 @@ class Permission(db.Model):
     groups = db.relationship('Group', secondary='group_permissions', back_populates='permissions')
 
 
-group_permissions = db.Table('group_permissions',
-    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True),
-    db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True),
-    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
-)
+# Las tablas de asociación se crean dinámicamente cuando se llama a create_association_tables()
+# después de que todos los modelos estén definidos
