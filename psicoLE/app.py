@@ -211,34 +211,52 @@ def create_app(config=None):
     
     return app
 
+def is_blueprint_registered(app, name):
+    """Check if a blueprint is already registered with the given name."""
+    return name in app.blueprints
+
 def register_blueprints(app, skip_auth=False):
     """Register all blueprints with the Flask application."""
     try:
+        # Register auth blueprint if not skipped
         if not skip_auth:
             try:
-                from auth import auth_bp
-                app.register_blueprint(auth_bp, url_prefix='/auth')
-                app.logger.info("Registered auth blueprint")
+                if not is_blueprint_registered(app, 'auth'):
+                    from auth import auth_bp
+                    app.register_blueprint(auth_bp, url_prefix='/auth')
+                    app.logger.info("Registered auth blueprint")
+                else:
+                    app.logger.info("Auth blueprint already registered, skipping...")
             except Exception as e:
                 app.logger.error(f"Failed to register auth blueprint: {str(e)}")
                 raise
+
+        # Register main blueprint
         try:
-            from main import main_bp
-            app.register_blueprint(main_bp)
-            app.logger.info("Registered main blueprint")
+            if not is_blueprint_registered(app, 'main'):
+                from main import main_bp
+                app.register_blueprint(main_bp)
+                app.logger.info("Registered main blueprint")
+            else:
+                app.logger.info("Main blueprint already registered, skipping...")
         except Exception as e:
             app.logger.error(f"Failed to register main blueprint: {str(e)}")
             raise
-            
+
+        # Register profesionales blueprint
         try:
-            from profesionales.views import profesionales_bp
-            app.register_blueprint(profesionales_bp, url_prefix='/profesionales')
-            app.logger.info("Registered profesionales blueprint")
+            if not is_blueprint_registered(app, 'profesionales'):
+                from profesionales.views import profesionales_bp
+                app.register_blueprint(profesionales_bp, url_prefix='/profesionales')
+                app.logger.info("Registered profesionales blueprint")
+            else:
+                app.logger.info("Profesionales blueprint already registered, skipping...")
         except ImportError:
             app.logger.warning("Profesionales blueprint not found, skipping...")
         except Exception as e:
             app.logger.error(f"Failed to register profesionales blueprint: {str(e)}")
             
+        # Initialize admin dashboard
         try:
             from admin_dashboard import init_app as init_admin_dashboard
             init_admin_dashboard(app)
@@ -250,7 +268,7 @@ def register_blueprints(app, skip_auth=False):
         
         return True
     except Exception as e:
-        app.logger.error(f"Error registering blueprints: {str(e)}", exc_info=True)
+        app.logger.error(f"Error registering blueprints: {str(e)}")
         return False
 
 # Load environment variables

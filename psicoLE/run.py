@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run the Flask application."""
-from app import app, create_app
+from app import create_app
 
 if __name__ == '__main__':
     # Create and run the application

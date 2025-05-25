@@ -35,7 +35,7 @@ class Professional(db.Model):
     
     # Relación con Factura (usando string reference para evitar importación circular)
     facturas = relationship('Factura', back_populates='professional', lazy='dynamic',
-                         primaryjoin='Professional.id == Factura.professional_id',
+                         primaryjoin='Professional.id == foreign(Factura.professional_id)',
                          viewonly=True)
 
 
