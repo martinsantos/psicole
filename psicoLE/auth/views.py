@@ -1,16 +1,15 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session
+from flask import render_template, redirect, url_for, flash, session, request
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import db
 from .models import User, Role
 from .forms import RegistrationForm, LoginForm
-
-auth_bp = Blueprint('auth', __name__, template_folder='templates/auth')
+from . import auth_bp  # Import the blueprint from __init__.py
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('hello_world')) # Or a dashboard route
+        return redirect(url_for('main.index')) # Or a dashboard route
     form = RegistrationForm()
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data)
@@ -29,13 +28,13 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in.', 'success')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('login.login'))
     return render_template('register.html', title='Register', form=form)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('hello_world')) # Or a dashboard route
+        return redirect(url_for('main.index')) # Or a dashboard route
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -53,7 +52,7 @@ def login():
             # For now, let's redirect to the main page.
             # A better target would be a user-specific dashboard.
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('hello_world'))
+            return redirect(next_page or url_for('main.index'))
         else:
             flash('Login Unsuccessful. Please check username and password', 'danger')
     return render_template('login.html', title='Login', form=form)

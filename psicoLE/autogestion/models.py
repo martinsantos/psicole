@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
-from app import db
+from database import db
 from datetime import datetime
 
 class DataChangeRequest(db.Model):

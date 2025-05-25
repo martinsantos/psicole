@@ -15,7 +15,7 @@ autogestion_bp = Blueprint('autogestion', __name__,
 def financial_dashboard():
     if not current_user.professional:
         flash('No professional profile linked to your user account. Please contact support.', 'warning')
-        return redirect(url_for('hello_world')) # Or a more appropriate redirect
+        return redirect(url_for('main.index')) # Or a more appropriate redirect
 
     professional = current_user.professional
     

@@ -5,6 +5,10 @@ from flask_login import current_user
 from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuLink
+from flask_admin.model.form import converts
+from flask_admin.form import SecureForm
+from flask_wtf import FlaskForm
+from wtforms import PasswordField, StringField, validators
 from werkzeug.security import generate_password_hash
 from sqlalchemy import func, and_
 
@@ -13,6 +17,31 @@ from . import db
 
 # Import models after db is defined to avoid circular imports
 from .models import User, Role, SecurityEvent, UserSession, SecurityQuestion, SecurityEventType
+
+# Create a base view class that works around the metaclass conflict
+class BaseSecureModelView(ModelView):
+    """Base model view with security checks and common configurations."""
+    page_size = 20
+    form_base_class = FlaskForm
+    can_create = True
+    can_edit = True
+    can_delete = True
+    can_view_details = True
+    can_export = True
+    export_types = ['csv', 'xlsx']
+    
+    # These will be set after the formatters are defined
+    column_formatters = {}
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set up formatters here to avoid circular references
+        self.column_formatters = {
+            'created_at': _format_datetime,
+            'updated_at': _format_datetime,
+            'last_login': _format_datetime,
+            'user': _format_user
+        }
 
 # Custom formatters
 def _format_datetime(view, context, model, name):
@@ -26,7 +55,7 @@ def _format_user(view, context, model, name):
     """Format user for admin views."""
     user = getattr(model, 'user', None)
     if user:
-        return f"{user.email} ({user.id})"
+        return f"{user.email} ({user.id})" if hasattr(user, 'email') else f"User {user.id}"
     return ''
 
 class CustomAdminIndexView(AdminIndexView):
@@ -168,10 +197,10 @@ class SecureModelView(ModelView):
             db.session.rollback()
     
     def after_model_delete(self, model):
-        """Log model deletion."""
+        """Handle model deletion."""
         try:
+            # Log the deletion
             event = SecurityEvent(
-                user_id=current_user.id,
                 event_type=f'model_{model.__tablename__}_deleted',
                 ip_address=request.remote_addr,
                 user_agent=request.user_agent.string,
@@ -194,6 +223,9 @@ class SecureModelView(ModelView):
         'user': _format_user
     }
 
+class SecureModelView(BaseSecureModelView):
+    """Secure model view with additional security checks."""
+    pass
 
 class SecureIndexView(AdminIndexView):
     """Custom admin index view with security checks."""
@@ -205,7 +237,6 @@ class SecureIndexView(AdminIndexView):
         if not current_user.is_administrator():
             abort(403, description="No tienes permiso para acceder al panel de administración.")
         return super().index()
-
 
 def init_admin(app, db_instance):
     """Initialize the admin interface."""
@@ -225,12 +256,12 @@ def init_admin(app, db_instance):
     # Import models here to avoid circular imports
     from .models import User, Role, SecurityEvent, SecurityQuestion, UserSession
     
-    # Add model views
-    admin.add_view(UserModelView(User, db.session, name='Usuarios', category='Usuarios y Roles'))
-    admin.add_view(RoleModelView(Role, db.session, name='Roles', category='Usuarios y Roles'))
-    admin.add_view(SecurityEventModelView(SecurityEvent, db.session, name='Eventos de Seguridad', category='Seguridad'))
-    admin.add_view(SecurityQuestionModelView(SecurityQuestion, db.session, name='Preguntas de Seguridad', category='Seguridad'))
-    admin.add_view(UserSessionModelView(UserSession, db.session, name='Sesiones de Usuario', category='Seguridad'))
+    # Add model views using the provided db_instance
+    admin.add_view(UserModelView(User, db_instance.session, name='Usuarios', category='Usuarios y Roles'))
+    admin.add_view(RoleModelView(Role, db_instance.session, name='Roles', category='Usuarios y Roles'))
+    admin.add_view(SecurityEventModelView(SecurityEvent, db_instance.session, name='Eventos de Seguridad', category='Seguridad'))
+    admin.add_view(SecurityQuestionModelView(SecurityQuestion, db_instance.session, name='Preguntas de Seguridad', category='Seguridad'))
+    admin.add_view(UserSessionModelView(UserSession, db_instance.session, name='Sesiones de Usuario', category='Seguridad'))
     
     # Add custom links
     admin.add_link(MenuLink(name='Volver al Sitio', url='/'))
@@ -240,72 +271,89 @@ def init_admin(app, db_instance):
 
 
 # Custom Model Views
-class UserModelView(SecureModelView):
+class UserModelView(BaseSecureModelView):
     """Custom view for User model."""
-    # List view configuration
     column_list = [
-        'email', 'first_name', 'last_name', 'role', 
+        'email', 'first_name', 'last_name', 'role_id', 
         'is_active', 'email_verified', 'last_login', 'created_at'
     ]
     column_searchable_list = ['email', 'first_name', 'last_name']
     column_filters = [
-        'is_active', 'email_verified', 'role.name', 'created_at', 'last_login'
+        'is_active', 'email_verified', 'role_id', 'created_at', 'last_login'
     ]
     column_default_sort = ('created_at', True)
     
-    # Form configuration
-    form_columns = [
-        'email', 'first_name', 'last_name', 'role', 
-        'is_active', 'email_verified', 'password'
-    ]
-    form_edit_rules = {
-        'email', 'first_name', 'last_name', 'role', 
-        'is_active', 'email_verified', 'password'
-    }
-    form_create_rules = form_edit_rules
+    # Configuración de formulario simple
+    form_columns = ['email', 'first_name', 'last_name', 'role_id', 'is_active', 'email_verified']
     
-    # Override password field to use password input
-    form_overrides = {}
-    form_args = {
-        'password': {
-            'label': 'Contraseña',
-            'description': 'Dejar en blanco para mantener la contraseña actual',
-            'validators': []  # Remove default required validator
-        }
-    }
+    # Deshabilitar características que puedan causar conflictos
+    can_edit = True
+    can_create = True
+    can_delete = True
+    
+    # Configuración de seguridad básica
+    def is_accessible(self):
+        if not current_user.is_authenticated:
+            return False
+        return current_user.is_administrator()
     
     def on_model_change(self, form, model, is_created):
         """Handle model changes."""
-        # Only set password if it was provided in the form
-        if form.password.data:
+        # Solo establecer la contraseña si se proporcionó en el formulario
+        if is_created and hasattr(form, 'password') and form.password.data:
             model.set_password(form.password.data)
         
-        # Log the action
-        action = 'creado' if is_created else 'actualizado'
-        current_app.logger.info(f'Usuario {model.email} {action} por {current_user.email}')
+        # Llamar al método de la clase base
+        super().on_model_change(form, model, is_created)
         
-        # Call parent method
-        return super().on_model_change(form, model, is_created)
+        # Registrar la acción
+        action = 'creado' if is_created else 'actualizado'
+        if current_user.is_authenticated:
+            current_app.logger.info(f'Usuario {model.email} {action} por {current_user.email}')
+        else:
+            current_app.logger.info(f'Usuario {model.email} {action} (sistema)')
+    
+    # Sobrescribir el método para crear formularios
+    def create_form(self, obj=None):
+        form = super().create_form(obj)
+        
+        # Añadir campo de contraseña solo para creación
+        from wtforms import PasswordField, validators
+        form.password = PasswordField('Contraseña', [
+            validators.DataRequired(),
+            validators.Length(min=8, message='La contraseña debe tener al menos 8 caracteres')
+        ])
+        
+        return form
+        
+    def edit_form(self, obj=None):
+        form = super().edit_form(obj)
+        # Eliminar el campo de contraseña en el formulario de edición
+        if hasattr(form, 'password'):
+            del form.password
+        return form
 
 
-class RoleModelView(SecureModelView):
+class RoleModelView(BaseSecureModelView):
     """Custom view for Role model."""
-    # List view configuration
-    column_list = ['name', 'description', 'permissions', 'users_count']
+    column_list = ['name', 'description', 'created_at', 'updated_at']
     column_searchable_list = ['name', 'description']
-    column_filters = ['name']
-    column_default_sort = ('name', True)
+    column_filters = ['created_at', 'updated_at']
+    column_default_sort = ('name', False)
     
-    # Form configuration
-    form_columns = ['name', 'description', 'permissions', 'users']
-    form_edit_rules = form_columns
-    form_create_rules = form_columns
+    # Form configuration - no incluir permissions ya que no existe la relación directa
+    form_columns = ['name', 'description']
     
-    # Custom column for user count
-    def users_count(self, context, model, name):
-        return len(model.users)
+    # Configuración de seguridad básica
+    def is_accessible(self):
+        if not current_user.is_authenticated:
+            return False
+        return current_user.is_administrator()
     
-    # Set column labels
+    # Deshabilitar características que puedan causar conflictos
+    can_edit = True
+    can_create = True
+    can_delete = True
     column_labels = {
         'name': 'Nombre',
         'description': 'Descripción',
@@ -322,9 +370,8 @@ class RoleModelView(SecureModelView):
         return super().on_model_change(form, model, is_created)
 
 
-class SecurityEventModelView(SecureModelView):
+class SecurityEventModelView(BaseSecureModelView):
     """Custom view for SecurityEvent model."""
-    # List view configuration
     column_list = ['event_type', 'user', 'ip_address', 'user_agent', 'created_at']
     column_searchable_list = ['event_type', 'ip_address', 'user_agent']
     column_filters = ['event_type', 'created_at', 'ip_address']
@@ -358,22 +405,17 @@ class SecurityEventModelView(SecureModelView):
     }
 
 
-class SecurityQuestionModelView(SecureModelView):
+class SecurityQuestionModelView(BaseSecureModelView):
     """Custom view for SecurityQuestion model."""
-    # List view configuration
-    column_list = ['question', 'is_active', 'created_at', 'updated_at']
-    column_searchable_list = ['question']
+    column_list = ['question_text', 'is_active', 'created_at', 'updated_at']
+    column_searchable_list = ['question_text']
     column_filters = ['is_active', 'created_at']
-    column_default_sort = ('question', True)
-    
-    # Form configuration
-    form_columns = ['question', 'is_active']
+    column_default_sort = ('question_text', True)
+    form_columns = ['question_text', 'is_active']
     form_edit_rules = form_columns
     form_create_rules = form_columns
-    
-    # Set column labels
     column_labels = {
-        'question': 'Pregunta',
+        'question_text': 'Pregunta',
         'is_active': 'Activa',
         'created_at': 'Creada',
         'updated_at': 'Actualizada'
@@ -393,9 +435,8 @@ class SecurityQuestionModelView(SecureModelView):
         return super().on_model_change(form, model, is_created)
 
 
-class UserSessionModelView(SecureModelView):
+class UserSessionModelView(BaseSecureModelView):
     """Custom view for UserSession model."""
-    # List view configuration
     column_list = ['user', 'ip_address', 'user_agent', 'last_activity', 'is_active', 'created_at']
     column_searchable_list = ['ip_address', 'user_agent']
     column_filters = ['is_active', 'last_activity', 'created_at', 'ip_address']

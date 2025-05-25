@@ -51,7 +51,7 @@ app.register_blueprint(autogestion_bp, url_prefix='/autogestion')
 
 
 @app.route('/')
-def hello_world():
+def index():
     # Using current_user from Flask-Login
     if current_user.is_authenticated:
         user_info = f"{current_user.username} (Role: {current_user.role.name if current_user.role else 'N/A'})"

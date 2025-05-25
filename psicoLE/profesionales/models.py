@@ -1,10 +1,10 @@
-from database import db # Corrected import
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from database import db
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, text
 from sqlalchemy.orm import relationship
-# Ensure User model is imported if it's referenced by Professional model for relationships
-# from ..auth.models import User # This relative import is tricky with how Flask discovers models.
-# A direct import like 'from auth.models import User' might be needed depending on PYTHONPATH and app structure.
-# For now, we rely on SQLAlchemy to resolve the 'users.id' string.
+from sqlalchemy.sql.expression import desc
+
+# Para evitar importaciones circulares, usamos strings para las referencias a los modelos
+# SQLAlchemy resolverá estas referencias cuando sea necesario
 
 class Professional(db.Model):
     __tablename__ = 'professionals'
@@ -24,17 +24,19 @@ class Professional(db.Model):
     cbu = Column(String(50)) # Bank account for payments
     autoriza_debito_automatico = Column(db.Boolean, nullable=False, default=False)
 
-    # The relationship should be defined referencing the class name `User` if it's imported,
-    # or the table name 'users' as a string if not.
-    # Assuming User class will be available in the SQLAlchemy metadata context.
+    # Relación con User (usando backref para evitar importación circular)
     user = relationship('User', backref=db.backref('professional', uselist=False))
-
-    # Back-references for Cobranzas
-    cuotas = relationship('Cuota', back_populates='professional', lazy='dynamic', order_by='Cuota.periodo.desc()')
-    pagos = relationship('Pago', back_populates='professional', lazy='dynamic', order_by='Pago.fecha_pago.desc()')
-
-    # Back-reference for Facturacion
-    facturas = relationship('Factura', back_populates='professional', lazy='dynamic', order_by='Factura.fecha_emision.desc()')
+    
+    # Relación con Cuota (sin ordenamiento para simplificar)
+    cuotas = relationship('Cuota', back_populates='professional', lazy='dynamic')
+    
+    # Relación con Pago (sin ordenamiento para simplificar)
+    pagos = relationship('Pago', back_populates='professional', lazy='dynamic')
+    
+    # Relación con Factura (usando string reference para evitar importación circular)
+    facturas = relationship('Factura', back_populates='professional', lazy='dynamic',
+                         primaryjoin='Professional.id == Factura.professional_id',
+                         viewonly=True)
 
 
     def __init__(self, first_name, last_name, matricula, status_matricula, email, user_id=None, vigencia_matricula=None, phone_number=None, address=None, title=None, specialization=None, university=None, cbu=None, autoriza_debito_automatico=False):

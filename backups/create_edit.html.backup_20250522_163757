@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+<<<<<<< HEAD
+{% from "_form_macros.html" import render_field %}
+{% from "_breadcrumbs.html" import render_breadcrumbs %}
+=======
+{% from "_form_macros.html" import render_field %} {# Assuming you might create form macros #}
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
+
+{% block title %}{{ title }} - Profesionales - PsicoLE{% endblock %}
+
+{% block content %}
+<<<<<<< HEAD
+{% if professional_id %}
+    {# Editing existing professional #}
+    {{ render_breadcrumbs([
+        {'url': url_for('profesionales.list_professionals'), 'text': 'Professionals'}, 
+        {'url': url_for('profesionales.detail_professional', professional_id=professional_id), 'text': legend.replace('Edit ', '')},
+        {'text': 'Edit'}
+    ]) }}
+{% else %}
+    {# Creating new professional #}
+    {{ render_breadcrumbs([
+        {'url': url_for('profesionales.list_professionals'), 'text': 'Professionals'}, 
+        {'text': 'Create New'}
+    ]) }}
+{% endif %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h2 class="h4 mb-0"><i class="fas fa-user-plus me-2"></i>{{ legend }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action=""> {# Action URL will be set by the view #}
+                    {{ form.hidden_tag() }}
+                    <fieldset class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ render_field(form.first_name) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ render_field(form.last_name) }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ render_field(form.matricula) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ render_field(form.status_matricula, class="form-select") }}
+                            </div>
+                        </div>
+                        
+                        {{ render_field(form.email, type="email", placeholder="example@domain.com") }}
+                        {{ render_field(form.vigencia_matricula, type="date", description="License Expiry Date (YYYY-MM-DD)") }}
+                        
+                        <hr class="my-4">
+                        <h5 class="mb-3">Additional Information (Optional)</h5>
+
+                        {{ render_field(form.phone_number, placeholder="+54 9 XXX XXXXXXX") }}
+                        {{ render_field(form.address, rows="3", placeholder="Street Address, City, Province") }}
+                        {{ render_field(form.title, placeholder="e.g., Licenciado en Psicología") }}
+                        {{ render_field(form.specialization, placeholder="e.g., Psicología Clínica, Neuropsicología") }}
+                        {{ render_field(form.university, placeholder="Name of University") }}
+                        {{ render_field(form.cbu, placeholder="CBU for payments (22 digits)") }}
+
+                    </fieldset>
+                    <div class="form-group mt-4 text-end">
+                        <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary me-2"><i class="fas fa-times me-1"></i> Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }} {# Icon will be added by form macro if desired, or add here #}
+                    </div>
+                </form>
+            </div>
+        </div>
+=======
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>{{ legend }}</h2>
+        <form method="POST" action=""> {# Action URL will be set by the view #}
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{ legend }}</legend>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ render_field(form.first_name, class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.last_name, class="form-control") }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ render_field(form.matricula, class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ render_field(form.status_matricula, class="form-select") }}
+                    </div>
+                </div>
+
+                {{ render_field(form.vigencia_matricula, class="form-control", type="date") }}
+                {{ render_field(form.email, class="form-control") }}
+                {{ render_field(form.phone_number, class="form-control") }}
+                {{ render_field(form.address, class="form-control", rows="3") }}
+                {{ render_field(form.title, class="form-control") }}
+                {{ render_field(form.specialization, class="form-control") }}
+                {{ render_field(form.university, class="form-control") }}
+                {{ render_field(form.cbu, class="form-control") }}
+
+            </fieldset>
+            <div class="form-group mt-4">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('profesionales.list_professionals') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
+    </div>
+</div>
+{% endblock %}

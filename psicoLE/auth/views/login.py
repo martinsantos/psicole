@@ -4,10 +4,11 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, current_user
 from werkzeug.security import check_password_hash
 
-from ..models import User, FailedLoginAttempt, SecurityEvent, SecurityEventType, db
+from ..models import User, SecurityEvent, SecurityEventType, db
+from ..security_models import FailedLoginAttempt
 from ..security import is_ip_blocked, generate_token
-from .decorators import anonymous_required
-from .forms import LoginForm
+from ..decorators import anonymous_required
+from ..forms import LoginForm
 
 # Create login blueprint
 login_bp = Blueprint('login', __name__)

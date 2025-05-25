@@ -1,0 +1,242 @@
+<<<<<<< HEAD
+{% extends "auth/base.html" %}
+
+{% block title %}Registro - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2 class="h4 text-gray-900 mb-3">Crear una cuenta</h2>
+    <p class="text-muted">Completa el formulario para registrarte</p>
+</div>
+
+<form method="POST" action="{{ url_for('auth.register') }}" class="needs-validation" novalidate>
+    {{ form.hidden_tag() }}
+    
+    <!-- Username Field -->
+    <div class="mb-3">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-user"></i></span>
+            {% if form.username.errors %}
+                {{ form.username(class="form-control form-control-lg is-invalid", placeholder="Nombre de usuario") }}
+                <div class="invalid-feedback text-start">
+                    {% for error in form.username.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.username(class="form-control form-control-lg", placeholder="Nombre de usuario") }}
+            {% endif %}
+        </div>
+        <small class="form-text text-muted text-start d-block ps-4">Entre 3 y 20 caracteres. Puedes usar letras, números y guiones bajos.</small>
+    </div>
+    
+    <!-- Email Field -->
+    <div class="mb-3">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+            {% if form.email.errors %}
+                {{ form.email(class="form-control form-control-lg is-invalid", placeholder="Correo electrónico") }}
+                <div class="invalid-feedback text-start">
+                    {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.email(class="form-control form-control-lg", placeholder="Correo electrónico") }}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Password Field -->
+    <div class="mb-3">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+            {% if form.password.errors %}
+                {{ form.password(class="form-control form-control-lg is-invalid", placeholder="Contraseña") }}
+                <button class="btn btn-outline-secondary toggle-password" type="button">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <div class="invalid-feedback text-start">
+                    {% for error in form.password.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.password(class="form-control form-control-lg", placeholder="Contraseña") }}
+                <button class="btn btn-outline-secondary toggle-password" type="button">
+                    <i class="fas fa-eye"></i>
+                </button>
+            {% endif %}
+        </div>
+        <small class="form-text text-muted text-start d-block ps-4">
+            Mínimo 8 caracteres, incluyendo mayúsculas, minúsculas y números.
+        </small>
+    </div>
+    
+    <!-- Confirm Password Field -->
+    <div class="mb-4">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+            {% if form.confirm_password.errors %}
+                {{ form.confirm_password(class="form-control form-control-lg is-invalid", placeholder="Confirmar contraseña") }}
+                <button class="btn btn-outline-secondary toggle-password" type="button">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <div class="invalid-feedback text-start">
+                    {% for error in form.confirm_password.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.confirm_password(class="form-control form-control-lg", placeholder="Confirmar contraseña") }}
+                <button class="btn btn-outline-secondary toggle-password" type="button">
+                    <i class="fas fa-eye"></i>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Terms and Conditions -->
+    <div class="mb-4">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="terms" required>
+            <label class="form-check-label" for="terms">
+                Acepto los <a href="#" class="text-decoration-none">Términos de Servicio</a> y la 
+                <a href="#" class="text-decoration-none">Política de Privacidad</a>
+            </label>
+            <div class="invalid-feedback">
+                Debes aceptar los términos y condiciones para continuar.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Registrarse
+        </button>
+    </div>
+    
+    <!-- Login Link -->
+    <div class="text-center">
+        <p class="mb-0">¿Ya tienes una cuenta? 
+            <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
+                Inicia sesión aquí
+            </a>
+        </p>
+    </div>
+</form>
+
+{% block extra_js %}
+<script>
+// Toggle password visibility
+const togglePassword = document.querySelectorAll('.toggle-password');
+togglePassword.forEach(button => {
+    button.addEventListener('click', function() {
+        const input = this.previousElementSibling;
+        const icon = this.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+});
+
+// Form validation
+(function() {
+    'use strict';
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const validation = Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}
+=======
+{% extends "base.html" %}
+
+{% block title %}Register - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Register New Account</h2>
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group mb-3">
+                {{ form.username.label(class="form-label") }}
+                {% if form.username.errors %}
+                    {{ form.username(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.username.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.username(class="form-control") }}
+                {% endif %}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.email.label(class="form-label") }}
+                {% if form.email.errors %}
+                    {{ form.email(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.email(class="form-control") }}
+                {% endif %}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.password.label(class="form-label") }}
+                {% if form.password.errors %}
+                    {{ form.password(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.password(class="form-control") }}
+                {% endif %}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.confirm_password.label(class="form-label") }}
+                {% if form.confirm_password.errors %}
+                    {{ form.confirm_password(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.confirm_password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.confirm_password(class="form-control") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+        <p class="mt-3">
+            Already have an account? <a href="{{ url_for('auth.login') }}">Log In</a>
+        </p>
+    </div>
+</div>
+>>>>>>> 1eca9da5ea75796c688eecc7b35bab563ae145b2
+{% endblock %}

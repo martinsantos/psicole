@@ -3,6 +3,8 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, T
 from sqlalchemy.orm import relationship, backref
 from datetime import datetime, timedelta
 from flask_login import UserMixin  # Import UserMixin
+from .security_models import Permission, SecurityQuestion, get_role_permissions_association  # Import models and functions from security_models
+from . import associations  # Import association tables
 from enum import Enum, auto
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -11,252 +13,49 @@ def init_models():
     """
     Initialize model relationships after all models are defined.
     
-    This function sets up all the relationships between models to avoid circular imports.
-    It should be called after all model classes are defined.
+    This function is kept for backward compatibility and to handle any
+    remaining setup that can't be done at the class level.
     
     Returns:
         dict: A dictionary containing all model classes for easy access.
     """
     from .security_models import (
-        TokenBlacklist, PasswordHistory, FailedLoginAttempt, SecurityQuestion,
+        TokenBlacklist, PasswordHistory, FailedLoginAttempt,
         UserConsent, UserDevice, UserActivity, UserNotification, UserPreference,
-        Group, Permission, user_groups, user_permissions, group_permissions
+        Group, Permission
     )
     
-    # ===== USER MODEL RELATIONSHIPS =====
-    User.role = relationship('Role', back_populates='users')
-    
-    # Security answers relationship (many-to-one with SecurityQuestion through UserSecurityAnswer)
-    User.security_answers = relationship(
-        'UserSecurityAnswer',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic'
-    )
-    
-    # Groups and permissions
-    User.groups = relationship(
-        'Group',
-        secondary=user_groups,
-        back_populates='users',
-        lazy='dynamic'
-    )
-    
-    User.permissions = relationship(
-        'Permission',
-        secondary=user_permissions,
-        back_populates='users',
-        lazy='dynamic'
-    )
-    
-    # Security-related relationships
-    User.password_history = relationship(
-        'PasswordHistory',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(PasswordHistory.created_at)'
-    )
-    
-    User.failed_login_attempts = relationship(
-        'FailedLoginAttempt',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(FailedLoginAttempt.attempt_time)'
-    )
-    
-    User.security_questions = relationship(
-        'SecurityQuestion',
-        secondary='user_security_answers',
-        back_populates='users',
-        lazy='dynamic'
-    )
-    
-    # User data and preferences
-    User.consents = relationship(
-        'UserConsent',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(UserConsent.created_at)'
-    )
-    
-    User.devices = relationship(
-        'UserDevice',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic'
-    )
-    
-    User.activities = relationship(
-        'UserActivity',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(UserActivity.created_at)'
-    )
-    
-    User.notifications = relationship(
-        'UserNotification',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(UserNotification.created_at)'
-    )
-    
-    User.user_preferences = relationship(
-        'UserPreference',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic'
-    )
-    
-    User.tokens_blacklist = relationship(
-        'TokenBlacklist',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(TokenBlacklist.created_at)'
-    )
-    
-    # Sessions and audit logs
-    User.sessions = relationship(
-        'UserSession',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(UserSession.last_activity)'
-    )
-    
-    User.audit_logs = relationship(
-        'SecurityEvent',
-        back_populates='user',
-        cascade='all, delete-orphan',
-        lazy='dynamic',
-        order_by='desc(SecurityEvent.created_at)'
-    )
-    
-    # ===== ROLE MODEL RELATIONSHIPS =====
-    Role.users = relationship('User', back_populates='role', lazy='dynamic')
-    
-    Role.permissions = relationship(
-        'Permission',
-        secondary=group_permissions,  # Reusing group_permissions for role_permissions
-        back_populates='roles',
-        lazy='dynamic'
-    )
-    
-    # ===== PERMISSION MODEL RELATIONSHIPS =====
-    Permission.roles = relationship(
-        'Role',
-        secondary=group_permissions,  # Reusing group_permissions for role_permissions
-        back_populates='permissions',
-        lazy='dynamic'
-    )
-    
-    Permission.users = relationship(
-        'User',
-        secondary=user_permissions,
-        back_populates='permissions',
-        lazy='dynamic'
-    )
-    
-    # ===== GROUP MODEL RELATIONSHIPS =====
-    Group.users = relationship(
-        'User',
-        secondary=user_groups,
-        back_populates='groups',
-        lazy='dynamic'
-    )
-    
-    Group.permissions = relationship(
-        'Permission',
-        secondary=group_permissions,
-        back_populates='groups',
-        lazy='dynamic'
-    )
-    
-    # ===== SECURITY QUESTION RELATIONSHIPS =====
-    SecurityQuestion.users = relationship(
-        'User',
-        secondary='user_security_answers',
-        back_populates='security_questions',
-        lazy='dynamic'
-    )
-    
-    SecurityQuestion.answers = relationship(
-        'UserSecurityAnswer',
-        back_populates='question',
-        cascade='all, delete-orphan',
-        lazy='dynamic'
-    )
-    
-    # ===== USER SECURITY ANSWER RELATIONSHIPS =====
-    UserSecurityAnswer.user = relationship('User', back_populates='security_answers')
-    UserSecurityAnswer.question = relationship('SecurityQuestion', back_populates='answers')
-    
-    # ===== TOKEN BLACKLIST RELATIONSHIPS =====
-    TokenBlacklist.user = relationship('User', back_populates='tokens_blacklist')
-    
-    # ===== PASSWORD HISTORY RELATIONSHIPS =====
-    PasswordHistory.user = relationship('User', back_populates='password_history')
-    
-    # ===== FAILED LOGIN ATTEMPT RELATIONSHIPS =====
-    FailedLoginAttempt.user = relationship('User', back_populates='failed_login_attempts')
-    
-    # ===== USER CONSENT RELATIONSHIPS =====
-    UserConsent.user = relationship('User', back_populates='consents')
-    
-    # ===== USER DEVICE RELATIONSHIPS =====
-    UserDevice.user = relationship('User', back_populates='devices')
-    
-    # ===== USER ACTIVITY RELATIONSHIPS =====
-    UserActivity.user = relationship('User', back_populates='activities')
-    
-    # ===== USER NOTIFICATION RELATIONSHIPS =====
-    UserNotification.user = relationship('User', back_populates='notifications')
-    
-    # ===== USER PREFERENCE RELATIONSHIPS =====
-    UserPreference.user = relationship('User', back_populates='user_preferences')
-    
-    # ===== USER SESSION RELATIONSHIPS =====
-    UserSession.user = relationship('User', back_populates='sessions')
-    
-    # ===== SECURITY EVENT RELATIONSHIPS =====
-    SecurityEvent.user = relationship('User', back_populates='audit_logs')
+    # All relationships are now defined in their respective model classes
+    # This function is kept for backward compatibility
     
     # Return a dictionary of all models for easy access
     return {
-        # Core models
         'User': User,
         'Role': Role,
-        'Group': Group,
-        'Permission': Permission,
-        
-        # Security models
+        'PasswordResetToken': PasswordResetToken,
+        'EmailVerificationToken': EmailVerificationToken,
+        'SecurityEvent': SecurityEvent,
+        'UserSession': UserSession,
+        'UserSecurityAnswer': UserSecurityAnswer,
+        'SecurityQuestion': SecurityQuestion,
         'TokenBlacklist': TokenBlacklist,
         'PasswordHistory': PasswordHistory,
         'FailedLoginAttempt': FailedLoginAttempt,
-        'SecurityQuestion': SecurityQuestion,
-        'UserSecurityAnswer': UserSecurityAnswer,
         'UserConsent': UserConsent,
         'UserDevice': UserDevice,
         'UserActivity': UserActivity,
         'UserNotification': UserNotification,
         'UserPreference': UserPreference,
-        'UserSession': UserSession,
-        'SecurityEvent': SecurityEvent,
-        
-        # Token models
-        'PasswordResetToken': PasswordResetToken,
-        'EmailVerificationToken': EmailVerificationToken,
-        
-        # Association tables
-        'user_roles': user_roles,
-        'user_groups': user_groups,
-        'user_permissions': user_permissions,
-        'group_permissions': group_permissions
+        'TokenBlacklist': TokenBlacklist,
+        'PasswordHistory': PasswordHistory,
+        'FailedLoginAttempt': FailedLoginAttempt,
+        'UserConsent': UserConsent,
+        'UserDevice': UserDevice,
+        'UserActivity': UserActivity,
+        'UserNotification': UserNotification,
+        'UserPreference': UserPreference,
+        'Group': Group,
+        'Permission': Permission
     }
 
 class SecurityEventType(Enum):
@@ -287,9 +86,17 @@ class Role(db.Model):
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    is_system_role = Column(Boolean, default=False, nullable=False)
     
-    # Relationships will be set in init_models
-    users = None  # Will be set in init_models
+    # Relationships
+    users = relationship('User', back_populates='role', lazy='dynamic')
+    permissions = relationship(
+        'Permission',
+        secondary=lambda: get_role_permissions_association(),
+        back_populates='roles',
+        lazy='dynamic',
+        viewonly=False
+    )
     
     def __init__(self, name, description=None):
         self.name = name
@@ -374,22 +181,54 @@ class User(UserMixin, db.Model):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_seen = Column(DateTime, nullable=True)
     
-    # Relationships (will be set in init_models)
+    # Relationships
     role_id = Column(Integer, ForeignKey('roles.id'), index=True, nullable=True)
-    security_answers = None
-    groups = None
-    permissions = None
-    password_history = None
-    failed_login_attempts = None
-    security_questions = None
-    consents = None
-    devices = None
-    activities = None
-    notifications = None
-    user_preferences = None
-    tokens_blacklist = None
-    sessions = None
-    audit_logs = None
+    role = relationship('Role', back_populates='users')
+    
+    # Security answers and questions
+    security_answers = relationship('UserSecurityAnswer', back_populates='user', lazy='dynamic')
+    security_questions = relationship(
+        'SecurityQuestion',
+        secondary='user_security_answers',
+        viewonly=True,
+        lazy='dynamic',
+        back_populates='users',
+        overlaps='user_answers,security_questions'
+    )
+    
+    # Groups and permissions - using string literals for table names
+    groups = relationship(
+        'Group',
+        secondary='user_groups',
+        primaryjoin='User.id == user_groups.c.user_id',
+        secondaryjoin='Group.id == user_groups.c.group_id',
+        back_populates='users',
+        lazy='dynamic'
+    )
+    permissions = relationship(
+        'Permission',
+        secondary='user_permissions',
+        primaryjoin='User.id == user_permissions.c.user_id',
+        secondaryjoin='Permission.id == user_permissions.c.permission_id',
+        back_populates='users',
+        lazy='dynamic'
+    )
+    
+    # Security related - using string references to avoid circular imports
+    password_history = relationship('PasswordHistory', back_populates='user', lazy='dynamic')
+    failed_login_attempts = relationship('FailedLoginAttempt', back_populates='user', lazy='dynamic')
+    tokens_blacklist = relationship('TokenBlacklist', back_populates='user')
+    
+    # User data - using string references to avoid circular imports
+    consents = relationship('UserConsent', back_populates='user', lazy='dynamic')
+    devices = relationship('UserDevice', back_populates='user', lazy='dynamic')
+    activities = relationship('UserActivity', back_populates='user', order_by='UserActivity.created_at.desc()', lazy='dynamic')
+    notifications = relationship('UserNotification', back_populates='user', order_by='UserNotification.created_at.desc()', lazy='dynamic')
+    user_preferences = relationship('UserPreference', back_populates='user', lazy='dynamic')
+    sessions = relationship('UserSession', back_populates='user', order_by='UserSession.last_activity.desc()', lazy='dynamic')
+    
+    # Audit logs (if using a separate audit log model)
+    audit_logs = None  # Will be set up if using an audit log model
     
     def __init__(self, username, email, password=None, **kwargs):
         """
@@ -557,7 +396,8 @@ class User(UserMixin, db.Model):
     def set_password(self, password):
         """Set user password."""
         from werkzeug.security import generate_password_hash
-        self.password_hash = generate_password_hash(password)
+        # Use pbkdf2:sha256 method which is more widely supported
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
     
     def check_password(self, password):
         """Check if the provided password is correct."""
@@ -700,7 +540,7 @@ class UserSession(db.Model):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relación con el usuario
-    user = relationship('User', backref='sessions')
+    user = relationship('User', backref='user_sessions')
     
     def __init__(self, user_id, session_id, ip_address=None, user_agent=None, expires_at=None):
         self.user_id = user_id
@@ -716,53 +556,25 @@ class UserSession(db.Model):
         return f'<UserSession {self.session_id} - User {self.user_id}>'
 
 
-class SecurityQuestion(db.Model):
-    """Modelo para almacenar preguntas de seguridad para la autenticación de dos factores."""
-    __tablename__ = 'security_questions'
-    
-    id = Column(Integer, primary_key=True)
-    question = Column(String(255), nullable=False, unique=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    
-    # Relación con las respuestas de los usuarios
-    user_answers = relationship('UserSecurityAnswer', back_populates='question', lazy='dynamic', 
-                              cascade='all, delete-orphan')
-    
-    def __init__(self, question, is_active=True):
-        self.question = question
-        self.is_active = is_active
-    
-    def to_dict(self):
-        """Convierte el objeto a un diccionario."""
-        return {
-            'id': self.id,
-            'question': self.question,
-            'is_active': self.is_active,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
-    
-    @classmethod
-    def get_active_questions(cls):
-        """Obtiene todas las preguntas de seguridad activas."""
-        return cls.query.filter_by(is_active=True).all()
-    
 class UserSecurityAnswer(db.Model):
     """Modelo para almacenar las respuestas de los usuarios a las preguntas de seguridad."""
     __tablename__ = 'user_security_answers'
     
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    question_id = Column(Integer, ForeignKey('security_questions.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('security_questions.id', ondelete='CASCADE'), nullable=False, index=True)
     answer_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relaciones
+    # Relationships - using string references to avoid circular imports
     user = relationship('User', back_populates='security_answers')
-    question = relationship('SecurityQuestion', back_populates='user_answers')
+    question = relationship('SecurityQuestion', back_populates='user_answers', overlaps='user_answers,security_questions')
+    
+    # Add indexes for better query performance
+    __table_args__ = (
+        db.Index('idx_user_question', 'user_id', 'question_id', unique=True),
+    )
     
     def __init__(self, user_id, question_id, answer_hash):
         """
@@ -784,6 +596,7 @@ class UserSecurityAnswer(db.Model):
         Args:
             answer (str): Respuesta en texto plano
         """
+        from werkzeug.security import generate_password_hash
         self.answer_hash = generate_password_hash(answer)
     
     def check_answer(self, answer):
@@ -796,6 +609,7 @@ class UserSecurityAnswer(db.Model):
         Returns:
             bool: True si la respuesta es correcta, False en caso contrario
         """
+        from werkzeug.security import check_password_hash
         return check_password_hash(self.answer_hash, answer)
     
     def to_dict(self):
@@ -841,4 +655,7 @@ class UserSecurityAnswer(db.Model):
         return cls.query.filter_by(user_id=user_id, question_id=question_id).first()
     
     def __repr__(self):
-        return f'<UserSecurityAnswer id={self.id} user_id={self.user_id} question_id={self.question_id}>'
+        return f'<UserSecurityAnswer {self.id} for User {self.user_id} Question {self.question_id}>'
+
+
+# SecurityQuestion model has been moved to security_models.py to avoid circular imports

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil Profesional - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Perfil del Profesional</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Información Personal</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Nombre:</strong> {{ professional.first_name }}</p>
+                    <p><strong>Apellido:</strong> {{ professional.last_name }}</p>
+                    <p><strong>Matrícula:</strong> {{ professional.matricula }}</p>
+                    <p><strong>Estado de Matrícula:</strong> {{ professional.status_matricula }}</p>
+                    {% if professional.vigencia_matricula %}
+                    <p><strong>Vigencia de Matrícula:</strong> {{ professional.vigencia_matricula }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> {{ professional.email }}</p>
+                    {% if professional.phone_number %}
+                    <p><strong>Teléfono:</strong> {{ professional.phone_number }}</p>
+                    {% endif %}
+                    {% if professional.address %}
+                    <p><strong>Dirección:</strong> {{ professional.address }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Información Profesional</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {% if professional.title %}
+                    <p><strong>Título:</strong> {{ professional.title }}</p>
+                    {% endif %}
+                    {% if professional.specialization %}
+                    <p><strong>Especialización:</strong> {{ professional.specialization }}</p>
+                    {% endif %}
+                    {% if professional.university %}
+                    <p><strong>Universidad:</strong> {{ professional.university }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    {% if professional.cbu %}
+                    <p><strong>CBU:</strong> {{ professional.cbu }}</p>
+                    {% endif %}
+                    <p><strong>Autoriza Débito Automático:</strong> {% if professional.autoriza_debito_automatico %}Sí{% else %}No{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('profesionales.index') }}" class="btn btn-secondary">Volver al Listado</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,3 +1,8 @@
+"""Authentication and authorization package.
+
+This package provides user authentication and authorization functionality.
+"""
+
 from flask import Blueprint, current_app, redirect, url_for, flash, request, session
 from flask_login import LoginManager, current_user, user_logged_in, user_logged_out
 from flask_mail import Mail
@@ -6,57 +11,128 @@ from datetime import datetime, timedelta
 import os
 
 # Initialize extensions
-db = None  # Will be set by init_app
+from flask_principal import Principal
+
 login_manager = LoginManager()
 mail = Mail()
+principal = Principal()
 
-# Import admin after db is initialized
-from .admin import init_admin as init_auth_admin
+# Import association tables first to avoid circular imports
+from . import associations
 
-# Placeholder for association tables
-user_roles = None
-user_groups = None
-user_permissions = None
-group_permissions = None
-
-# Dictionary to hold all models for easy access
+# Models dictionary to store all models
 models = {}
 
+# SQLAlchemy instance will be initialized in init_app
+db = None
+
 def init_models():
-    """Initialize models after db is available."""
-    global user_roles, user_groups, user_permissions, group_permissions, models
+    """Initialize models after db is available.
+    
+    This function ensures all models are imported and registered with SQLAlchemy.
+    It also initializes the models dictionary for easy access to model classes.
+    """
+    global models
+    
+    if models:  # Already initialized
+        return models
     
     try:
-        # Import models after db is initialized
-        from .security_models import (
-            TokenBlacklist, PasswordHistory, FailedLoginAttempt, SecurityQuestion,
-            UserConsent, UserDevice, UserActivity, UserNotification, UserPreference,
-            Group, Permission, create_association_tables
-        )
+        # Import all models to ensure they are registered with SQLAlchemy
+        # Import order is important to avoid circular imports
         
-        # Import remaining models
+        # First import the models that don't have relationships
+        from .models import SecurityEventType
+        
+        # Then import models with relationships
         from .models import (
-            User, Role, PasswordResetToken, EmailVerificationToken, 
-            SecurityEvent, UserSession, SecurityEventType, UserSecurityAnswer,
-            init_models as init_models_relationships
+            User, Role, PasswordResetToken, EmailVerificationToken,
+            SecurityEvent, UserSession, UserSecurityAnswer, SecurityQuestion
         )
         
-        # Create association tables
-        user_roles, user_groups, user_permissions, group_permissions = create_association_tables()
+        # Import security models
+        from .security_models import (
+            TokenBlacklist, PasswordHistory, FailedLoginAttempt,
+            UserConsent, UserDevice, UserActivity, UserNotification, 
+            UserPreference, Group, Permission
+        )
         
-        # Initialize model relationships
-        models = init_models_relationships()
+        # Initialize models dictionary
+        models = {
+            'User': User,
+            'Role': Role,
+            'SecurityQuestion': SecurityQuestion,
+            'UserSecurityAnswer': UserSecurityAnswer,
+            'SecurityEvent': SecurityEvent,
+            'UserSession': UserSession,
+            'TokenBlacklist': TokenBlacklist,
+            'PasswordHistory': PasswordHistory,
+            'FailedLoginAttempt': FailedLoginAttempt,
+            'UserConsent': UserConsent,
+            'UserDevice': UserDevice,
+            'UserActivity': UserActivity,
+            'UserNotification': UserNotification,
+            'UserPreference': UserPreference,
+            'Group': Group,
+            'Permission': Permission,
+            'SecurityEventType': SecurityEventType,
+            'PasswordResetToken': PasswordResetToken,
+            'EmailVerificationToken': EmailVerificationToken
+        }
         
-        # Add SecurityEventType to models
-        models['SecurityEventType'] = SecurityEventType
+        # Make sure all models are properly configured
+        from sqlalchemy import inspect
         
-        # Update global models dictionary
-        globals().update(models)
+        # Force SQLAlchemy to configure all mappers
+        from sqlalchemy.orm import configure_mappers
+        configure_mappers()
+        
+        # Initialize models dictionary
+        models = {
+            'User': User,
+            'Role': Role,
+            'PasswordResetToken': PasswordResetToken,
+            'EmailVerificationToken': EmailVerificationToken,
+            'SecurityEvent': SecurityEvent,
+            'UserSession': UserSession,
+            'SecurityEventType': SecurityEventType,
+            'UserSecurityAnswer': UserSecurityAnswer,
+            'SecurityQuestion': SecurityQuestion,
+            'TokenBlacklist': TokenBlacklist,
+            'PasswordHistory': PasswordHistory,
+            'FailedLoginAttempt': FailedLoginAttempt,
+            'UserConsent': UserConsent,
+            'UserDevice': UserDevice,
+            'UserActivity': UserActivity,
+            'UserNotification': UserNotification,
+            'UserPreference': UserPreference,
+            'Group': Group,
+            'Permission': Permission
+        }
+        
+        # Configure all mappers to ensure relationships are set up
+        from sqlalchemy.orm import configure_mappers
+        configure_mappers()
         
         return models
+        
     except Exception as e:
-        current_app.logger.error(f"Error initializing models: {str(e)}")
-        raise
+        if current_app:
+            current_app.logger.error(f'Error initializing models: {str(e)}')
+            if current_app.debug:
+                import traceback
+                current_app.logger.error(traceback.format_exc())
+        else:
+            print(f'Error initializing models: {str(e)}')
+            import traceback
+            traceback.print_exc()
+            
+        # Don't raise here to allow the app to start
+        return {}
+    finally:
+        # Clean up any database sessions
+        if db.session:
+            db.session.remove()
 
 # Security configuration
 MAX_LOGIN_ATTEMPTS = 5
@@ -228,88 +304,191 @@ def unauthorized():
         flash('Por favor inicia sesión para acceder a esta página.', 'info')
         return redirect(url_for('auth.login', next=request.full_path))
 
+        raise
+
 def init_app(app, db_instance=None):
     """Initialize authentication extensions with app context."""
     global db, models
     
-    # Set the db instance if provided
+    try:
+        # Use the provided db instance or create a new one
+        if db_instance is not None:
+            db = db_instance
+        else:
+            from flask_sqlalchemy import SQLAlchemy
+            db = SQLAlchemy(app)
+        
+        # Initialize Flask-Login
+        login_manager.login_view = 'login.login'
+        login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
+        login_manager.login_message_category = 'info'
+        login_manager.refresh_view = 'auth.reauthenticate'
+        login_manager.needs_refresh_message = (
+            'Por razones de seguridad, por favor vuelve a iniciar sesión para acceder a esta página.'
+        )
+        
+        # Initialize extensions
+        login_manager.init_app(app)
+        mail.init_app(app)
+        principal.init_app(app)
+        
+        # Import and register blueprints
+        from . import forms
+        from .views.login import login_bp as login_blueprint
+        
+        # Register the main auth blueprint
+        app.register_blueprint(auth_bp)
+        
+        # Register login routes
+        app.register_blueprint(login_blueprint, url_prefix='/auth')
+        
+        # Initialize models before admin
+        with app.app_context():
+            init_models()
+        
+        # Initialize admin
+        from .admin import init_admin as init_auth_admin
+        init_auth_admin(app, db)
+        
+        # Configure session timeout
+        @app.before_request
+        def before_request():
+            if current_user.is_authenticated:
+                current_user.last_seen = datetime.utcnow()
+                db.session.commit()
+                session.permanent = True
+                app.permanent_session_lifetime = timedelta(minutes=SESSION_TIMEOUT_MINUTES)
+                session.modified = True
+        
+        # Initialize models with the database
+        with app.app_context():
+            try:
+                # Import models here to avoid circular imports
+                from .security_models import create_association_tables, create_default_roles_and_permissions
+                
+                # Create association tables
+                global user_roles, user_groups, user_permissions, group_permissions
+                user_roles, user_groups, user_permissions, group_permissions = create_association_tables()
+                
+                # Initialize models and relationships
+                init_models()
+                
+                # Create database tables if they don't exist
+                db.create_all()
+                
+                # Create default roles and permissions if they don't exist
+                create_default_roles_and_permissions()
+                
+                # Create default security questions if they don't exist
+                from .models import SecurityQuestion
+                default_questions = [
+                    "¿Cuál es el nombre de tu primera mascota?",
+                    "¿Cuál es el nombre de tu colegio de primaria?",
+                    "¿Cuál es el nombre de tu ciudad de nacimiento?",
+                    "¿Cuál es el nombre de tu mejor amigo de la infancia?",
+                    "¿Cuál es tu comida favorita?"
+                ]
+                
+                for question in default_questions:
+                    if not SecurityQuestion.query.filter_by(question_text=question).first():
+                        db.session.add(SecurityQuestion(question_text=question))
+                
+                db.session.commit()
+                
+            except Exception as e:
+                app.logger.error(f"Error during database initialization: {str(e)}")
+                if app.debug:
+                    import traceback
+                    app.logger.error(traceback.format_exc())
+                raise
+        
+        return app
+        
+    except Exception as e:
+        if 'app' in locals():
+            app.logger.error(f"Error initializing auth: {str(e)}")
+            if app.debug:
+                import traceback
+                app.logger.error(traceback.format_exc())
+        else:
+            print(f"Error initializing auth before app was available: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        raise
+        
+        # Register event handlers
+        user_logged_in.connect(_on_user_logged_in, app)
+        user_logged_out.connect(_on_user_logged_out, app)
+        
+        # Add template globals
+        app.jinja_env.globals['current_user'] = current_user
+        app.jinja_env.globals['SecurityEventType'] = SecurityEventType
+        
+        # Create default admin user if it doesn't exist
+        with app.app_context():
+            from .models import User, Role
+            from werkzeug.security import generate_password_hash
+            
+            admin = User.query.filter_by(username='admin').first()
+            if not admin:
+                admin_role = Role.query.filter_by(name='admin').first()
+                if admin_role:
+                    try:
+                        admin = User(
+                            username='admin',
+                            email='admin@example.com',
+                            role_id=admin_role.id,
+                            password=generate_password_hash('admin123'),
+                            is_active=True,
+                            email_verified=True
+                        )
+                        db.session.add(admin)
+                        db.session.commit()
+                        app.logger.info('Created default admin user')
+                    except Exception as e:
+                        app.logger.error(f'Error creating admin user: {str(e)}')
+                        if app.debug:
+                            import traceback
+                            app.logger.error(traceback.format_exc())
+                        db.session.rollback()
+        
+        # Register blueprints
+        app.register_blueprint(auth_bp, url_prefix='/auth')
+        
+        return app
+
+# Import views after creating the blueprint to avoid circular imports
+from . import views, forms
+
+# Import the login blueprint
+from .views.login import login_bp as login_blueprint
+
+# Register the login blueprint with the auth blueprint
+def init_app(app, db_instance=None):
+    """Initialize the authentication module."""
+    global db
+    
     if db_instance is not None:
         db = db_instance
     
+    # Initialize models
+    init_models()
+    
+    # Register blueprints
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(login_blueprint, url_prefix='/auth')
+    
     # Initialize Flask-Login
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
-    login_manager.login_message_category = 'info'
     
     # Initialize Flask-Mail
     mail.init_app(app)
     
-    # Register blueprints
-    from . import routes
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    # Initialize Flask-Principal
+    principal.init_app(app)
     
-    # Initialize admin interface
-    init_auth_admin(app)
-    
-    # Register login/logout handlers
-    user_logged_in.connect(_on_user_logged_in, app)
-    user_logged_out.connect(_on_user_logged_out, app)
-    
-    # Initialize models if they haven't been initialized yet
-    if db is not None:
-        with app.app_context():
-            try:
-                # Initialize models and relationships
-                models = init_models()
-                
-                # Create all database tables
-                db.create_all()
-                
-                # Create default roles if they don't exist
-                Role = models.get('Role')
-                User = models.get('User')
-                
-                admin_role = Role.query.filter_by(name='admin').first()
-                if not admin_role:
-                    admin_role = Role(name='admin', description='Administrator with full access')
-                    db.session.add(admin_role)
-                
-                user_role = Role.query.filter_by(name='user').first()
-                if not user_role:
-                    user_role = Role(name='user', description='Regular user with basic access')
-                    db.session.add(user_role)
-                
-                # Create default admin user if it doesn't exist
-                admin_user = User.query.filter_by(username='admin').first()
-                if not admin_user:
-                    from werkzeug.security import generate_password_hash
-                    admin_user = User(
-                        username='admin',
-                        password_hash=generate_password_hash('admin'),
-                        email='admin@example.com',
-                        first_name='Admin',
-                        last_name='User',
-                        is_active=True,
-                        email_verified=True
-                    )
-                    admin_user.role = admin_role
-                    db.session.add(admin_user)
-                
-                db.session.commit()
-                
-                app.logger.info("Authentication system initialized successfully")
-                
-            except Exception as e:
-                app.logger.error(f'Error initializing auth models: {str(e)}')
-                if 'db' in locals() and db.session:
-                    db.session.rollback()
-                raise
-    
-    # Make db available globally
-    globals()['db'] = db
-    
-    return app
-
-# Import views after creating the blueprint to avoid circular imports
-from . import views, forms
+    # Register error handlers
+    from . import errors
+    app.register_error_handler(403, errors.forbidden)
+    app.register_error_handler(404, errors.not_found)
+    app.register_error_handler(500, errors.internal_server_error)

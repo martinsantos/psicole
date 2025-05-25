@@ -114,23 +114,50 @@ def create_app(config=None):
     login_manager.init_app(app)
     mail.init_app(app)
     
-    # Import and register blueprints
-    from auth import auth_bp, init_app as init_auth
-    
-    # Initialize auth with app and pass the db instance
+    # Initialize auth module
+    from auth import init_app as init_auth
     init_auth(app, db)
+    
+    # Register other blueprints
+    register_blueprints(app, skip_auth=True)
     
     # Set up the database in the app context
     with app.app_context():
         # Make sure the database is properly set up
         app.extensions['sqlalchemy'] = {'db': db, 'Model': db.Model}
         
-        # Create tables if they don't exist
+        # Import models to ensure they are registered with SQLAlchemy
         try:
+            # Import all models explicitly to ensure they are registered
+            print("Importing models...")
+            
+            # Import auth models first
+            from auth.models import User, Role
+            print("Imported User and Role from auth.models")
+            
+            # Import profesionales models
+            from profesionales.models import Professional
+            print("Imported Professional from profesionales.models")
+            
+            # Import cobranzas models
+            from cobranzas.models import Cuota, Pago
+            print("Imported Cuota and Pago from cobranzas.models")
+            
+            # Create tables if they don't exist
+            print("Creating database tables...")
             db.create_all()
             print("Database tables created/verified.")
+            
+        except ImportError as e:
+            print(f"Error importing models: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
         except Exception as e:
             print(f"Error creating database tables: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
     
     # Register blueprints (except auth which is already registered by init_auth)
     register_blueprints(app, skip_auth=True)

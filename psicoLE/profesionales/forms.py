@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, DateField, TextAreaField
+from wtforms import StringField, SubmitField, SelectField, DateField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Email, Optional, Length, ValidationError
 from .models import Professional # Assuming Professional model is in .models
 

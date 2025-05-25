@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Profesionales - PsicoLE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Listado de Profesionales</h1>
+    
+    <div class="d-flex justify-content-between mb-4">
+        <div>
+            <a href="{{ url_for('profesionales.new') }}" class="btn btn-primary">Nuevo Profesional</a>
+        </div>
+    </div>
+    
+    {% if professionals %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Estado</th>
+                    <th>Email</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for professional in professionals %}
+                <tr>
+                    <td>{{ professional.matricula }}</td>
+                    <td>{{ professional.first_name }}</td>
+                    <td>{{ professional.last_name }}</td>
+                    <td>{{ professional.status_matricula }}</td>
+                    <td>{{ professional.email }}</td>
+                    <td>
+                        <a href="{{ url_for('profesionales.profile', id=professional.id) }}" class="btn btn-sm btn-info">Ver</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No hay profesionales registrados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
